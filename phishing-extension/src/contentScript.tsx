@@ -17,21 +17,21 @@ const mountApp = () => {
 
     const App = () => {
         const [isPhishing, setIsPhishing] = useState<boolean | null>(null);
-
+        
         useEffect(() => {
-            // Retrieve the phishing status from chrome.storage
-            chrome.storage.local.get('phishingStatus', (result) => {
-                if (result.phishingStatus) {
-                    setIsPhishing(result.phishingStatus.isPhishing);
-                }
-            });
-
-            // Adjust the body padding to make space for the banner
             document.body.style.paddingTop = '50px'; // Match the banner height
             return () => {
                 document.body.style.paddingTop = ''; // Reset padding on unmount
             };
         }, []);
+
+        if (isPhishing === null) {
+            chrome.storage.local.get('phishingStatus', (result) => {
+                if (result.phishingStatus) {
+                    setIsPhishing(result.phishingStatus.isPhishing);
+                }
+            });
+        }
 
         return <Banner isPhishing={isPhishing} />;
     };
