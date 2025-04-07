@@ -20,11 +20,6 @@ chrome.runtime.sendMessage(
 const mountApp = () => {
     const mount = document.createElement('div');
     mount.id = 'phishing-banner-root';
-    // mount.style.position = 'fixed';
-    // mount.style.top = '0';
-    // mount.style.left = '0';
-    // mount.style.width = '100%';
-    // mount.style.zIndex = '9999';
     document.documentElement.appendChild(mount); // Append to <html>
 
 
@@ -57,8 +52,18 @@ const mountApp = () => {
         }, [phishingState, bannerState]);
 
         useEffect(() => {
-            setReturnedElement(isBannerEnabled ? <Banner isPhishing={isPhishing} /> : <></>);
-        }, [isBannerEnabled, isPhishing])
+            if (isBannerEnabled) {
+                setReturnedElement(<Banner isPhishing={isPhishing} />);
+                if (document.body) {
+                    document.body.style.marginTop = '50px';
+                }
+            } else {
+                setReturnedElement(<></>);
+                if (document.body) {
+                    document.body.style.marginTop = '0px';
+                }
+            }
+        }, [isBannerEnabled, isPhishing, document.body])
 
         return returnedElement
     };
