@@ -19,13 +19,20 @@ chrome.runtime.sendMessage(
 
 const mountApp = () => {
     const mount = document.createElement('div');
-    document.body.prepend(mount);
+    mount.id = 'phishing-banner-root';
+    // mount.style.position = 'fixed';
+    // mount.style.top = '0';
+    // mount.style.left = '0';
+    // mount.style.width = '100%';
+    // mount.style.zIndex = '9999';
+    document.documentElement.appendChild(mount); // Append to <html>
+
 
     const App = () => {
         const [isPhishing, setIsPhishing] = useState<boolean | null>(null);
         const [isBannerEnabled, setIsBannerEnabled] = useState<boolean>(false);
         const [returnedElement, setReturnedElement] = useState<React.ReactElement>(<></>);
-        
+
         useEffect(() => {
             setIsPhishing(phishingState);
 
@@ -34,6 +41,10 @@ const mountApp = () => {
                 if (message.type === MessageType.TOGGLE_BANNER) {
                     bannerState = message.enableBanner;
                     setIsBannerEnabled(bannerState);
+                }
+                if (message.type === MessageType.PHISHING_STATUS_UPDATED) {
+                    phishingState = message.isPhishing;
+                    setIsPhishing(phishingState);
                 }
             });
 
@@ -46,12 +57,8 @@ const mountApp = () => {
         }, [phishingState, bannerState]);
 
         useEffect(() => {
-            document.body.style.paddingTop = isBannerEnabled ? '50px' : ''; // Match the banner height
             setReturnedElement(isBannerEnabled ? <Banner isPhishing={isPhishing} /> : <></>);
-            return () => {
-                document.body.style.paddingTop = ''; // Reset padding on unmount
-            };
-        }, [isBannerEnabled])
+        }, [isBannerEnabled, isPhishing])
 
         return returnedElement
     };
@@ -70,9 +77,5 @@ chrome.runtime.onMessage.addListener((message: Message, _sender, sendResponse) =
     }
 });
 
-// Ensure the DOM is ready before mounting the app
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', mountApp);
-} else {
-    mountApp();
-}
+
+mountApp();
