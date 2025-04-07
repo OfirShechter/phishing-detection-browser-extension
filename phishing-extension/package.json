@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b && pnpm run build:main && pnpm run build:content",
+    "build:main": "vite build --config vite.main.config.ts",
+    "build:content": "vite build --config vite.content.config.ts",
     "lint": "eslint .",
     "preview": "vite preview"
   },
@@ -16,6 +18,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.21.0",
+    "@types/chrome": "^0.0.313",
     "@types/node": "^22.14.0",
     "@types/react": "^19.0.10",
     "@types/react-dom": "^19.0.4",

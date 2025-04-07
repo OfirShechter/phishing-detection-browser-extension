@@ -1,0 +1,14 @@
+import { isPhishingSite } from "./phishingDetector/phishingDetector";
+
+chrome.runtime.onMessage.addListener((message: Message, _sender, sendResponse) => {
+    if (message.type === MessageType.CHECK_PHISHING) {
+        const url = message.url;
+
+        const isPhishing = isPhishingSite();
+        console.log(`Checking URL: ${url}, Phishing: ${isPhishing}`);
+
+        sendResponse({ isPhishing });
+    }
+
+    return true;
+});
