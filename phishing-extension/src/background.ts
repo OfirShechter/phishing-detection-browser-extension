@@ -9,18 +9,26 @@ chrome.runtime.onMessage.addListener(
         const isEnabled = message.enableBanner;
         chrome.storage.local.set({ [StorageKey.BANNER_ENABLED]: isEnabled });
 
-        // Notify all tabs about the change
-        chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
-            tabs.forEach((tab) => {
-                if (tab.id) {
-                    console.log("Sending message to tab:", tab.id, "with banner state:", isEnabled);
-                    chrome.tabs.sendMessage(tab.id, { type: MessageType.TOGGLE_BANNER, enableBanner: message.enableBanner });
-                }
+        // Notify current tab about the change
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+          if (tabs[0].id) {
+            chrome.tabs.sendMessage(tabs[0].id, {
+              type: MessageType.TOGGLE_BANNER,
+              enableBanner: message.enableBanner,
             });
+          }
         });
         break;
       case MessageType.CHECK_PHISHING:
         const isPhishing = isPhishingSite();
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+          if (tabs[0].id) {
+            chrome.tabs.sendMessage(tabs[0].id, {
+              type: MessageType.PHISHING_STATUS_UPDATED,
+              isPhishing: isPhishing,
+            });
+          }
+        });
         sendResponse({ isPhishing });
         break;
       default:
