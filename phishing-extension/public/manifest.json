@@ -1,0 +1,47 @@
+{
+    "manifest_version": 3,
+    "name": "Phishing Detector",
+    "version": "1.0",
+    "description": "Detects potential phishing sites and shows banner",
+    "action": {
+        "default_popup": "popup.html",
+        "default_icon": {
+            "16": "icon.png",
+            "48": "icon.png",
+            "128": "icon.png"
+        }
+    },
+    "background": {
+        "service_worker": "background.js"
+    },
+    "permissions": [
+        "storage",
+        "scripting",
+        "tabs",
+        "activeTab"
+    ],
+    "host_permissions": [
+        "<all_urls>"
+    ],
+    "content_scripts": [
+        {
+            "matches": [
+                "<all_urls>"
+            ],
+            "js": [
+                "contentScript.js"
+            ],
+            "run_at": "document_start"
+        }
+    ],
+    "web_accessible_resources": [
+        {
+            "resources": [
+                "*"
+            ],
+            "matches": [
+                "<all_urls>"
+            ]
+        }
+    ]
+}
