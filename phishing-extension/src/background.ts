@@ -1,4 +1,5 @@
 import { isPhishingSite } from "./phishingDetector/phishingDetector";
+import { Message, MessageType } from "./types/message";
 
 chrome.runtime.onMessage.addListener((message: Message, _sender, sendResponse) => {
     if (message.type === MessageType.CHECK_PHISHING) {

@@ -1,8 +1,8 @@
-enum MessageType {
+export enum MessageType {
     CHECK_PHISHING = 'CHECK_PHISHING',
 }
 
-type Message = {
+export type Message = {
     type: MessageType;
     url: string;
 }
