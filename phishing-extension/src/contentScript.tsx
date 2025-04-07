@@ -3,6 +3,14 @@ import ReactDOM from 'react-dom/client';
 import { Banner } from './components/Banner';
 import { MessageType } from './types/message';
 
+// Send the CHECK_PHISHING message at document_start
+chrome.runtime.sendMessage(
+    { type: MessageType.CHECK_PHISHING, url: window.location.href },
+    (response) => {
+        console.log('Phishing status sent at document_start:', response);
+    }
+);
+
 const mountApp = () => {
     const mount = document.createElement('div');
     document.body.prepend(mount);
@@ -11,18 +19,18 @@ const mountApp = () => {
         const [isPhishing, setIsPhishing] = useState<boolean | null>(null);
 
         useEffect(() => {
-            // Send a message to the background script to check if the site is phishing
-            chrome.runtime.sendMessage(
-                { type: MessageType.CHECK_PHISHING, url: window.location.href },
-                (response) => {
-                    if (response && typeof response.isPhishing === 'boolean') {
-                        setIsPhishing(response.isPhishing);
-                    }
+            // Retrieve the phishing status from chrome.storage
+            chrome.storage.local.get('phishingStatus', (result) => {
+                if (result.phishingStatus) {
+                    setIsPhishing(result.phishingStatus.isPhishing);
                 }
-            );
-            console.log('Is Phishing:', isPhishing);
+            });
+
             // Adjust the body padding to make space for the banner
-            document.body.style.paddingTop = '40px';
+            document.body.style.paddingTop = '50px'; // Match the banner height
+            return () => {
+                document.body.style.paddingTop = ''; // Reset padding on unmount
+            };
         }, []);
 
         return <Banner isPhishing={isPhishing} />;
