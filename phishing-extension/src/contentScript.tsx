@@ -15,13 +15,7 @@ chrome.runtime.sendMessage(
     }
 );
 
-// Listen for toggle updates
-chrome.runtime.onMessage.addListener((message) => {
-    if (message.type === MessageType.TOGGLE_BANNER) {
-        console.log('Banner toggle message received:', message.enableBanner);
-        bannerState = message.enableBanner;
-    }
-});
+
 
 const mountApp = () => {
     const mount = document.createElement('div');
@@ -29,26 +23,37 @@ const mountApp = () => {
 
     const App = () => {
         const [isPhishing, setIsPhishing] = useState<boolean | null>(null);
-        const [isBannerEnabled, setIsBannerEnabled] = useState<boolean>(bannerState);
-
+        const [isBannerEnabled, setIsBannerEnabled] = useState<boolean>(false);
+        const [returnedElement, setReturnedElement] = useState<React.ReactElement>(<></>);
+        
         useEffect(() => {
             setIsPhishing(phishingState);
 
+            // Listen for toggle updates
+            chrome.runtime.onMessage.addListener((message) => {
+                if (message.type === MessageType.TOGGLE_BANNER) {
+                    bannerState = message.enableBanner;
+                    setIsBannerEnabled(bannerState);
+                }
+            });
+
             chrome.storage.local.get(StorageKey.BANNER_ENABLED, (result) => {
                 const bannerStatus = result[StorageKey.BANNER_ENABLED];
-                console.log('Banner status from storage:', bannerStatus);
                 if (bannerStatus !== undefined) {
                     setIsBannerEnabled(bannerStatus);
                 }
             });
+        }, [phishingState, bannerState]);
 
+        useEffect(() => {
             document.body.style.paddingTop = isBannerEnabled ? '50px' : ''; // Match the banner height
+            setReturnedElement(isBannerEnabled ? <Banner isPhishing={isPhishing} /> : <></>);
             return () => {
                 document.body.style.paddingTop = ''; // Reset padding on unmount
             };
-        }, [phishingState, bannerState]);
+        }, [isBannerEnabled])
 
-        return isBannerEnabled ? <Banner isPhishing={isPhishing} /> : <></>
+        return returnedElement
     };
 
     ReactDOM.createRoot(mount).render(
