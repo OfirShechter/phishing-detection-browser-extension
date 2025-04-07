@@ -1,13 +1,21 @@
 import { useState } from 'react';
+import { MessageType } from '../types/message';
 
 const Popup = () => {
     const [isPhishing, setIsPhishing] = useState<boolean | null>(null);
 
     if (isPhishing === null) {
-        // Retrieve the phishing status from chrome.storage
-        chrome.storage.local.get('phishingStatus', (result) => {
-            if (result.phishingStatus) {
-                setIsPhishing(result.phishingStatus.isPhishing);
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+            if (tabs[0]?.id) {
+                chrome.tabs.sendMessage(
+                    tabs[0].id,
+                    { type: MessageType.GET_PHISHING_STATUS },
+                    (response) => {
+                        if (response && typeof response.isPhishing === 'boolean') {
+                            setIsPhishing(response.isPhishing);
+                        }
+                    }
+                );
             }
         });
     };

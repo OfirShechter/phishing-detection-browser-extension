@@ -1,13 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import ReactDOM from 'react-dom/client';
 import { Banner } from './components/Banner';
-import { MessageType } from './types/message';
+import { Message, MessageType } from './types/message';
+
+let phishingState: boolean | null = null; // Store phishing state in memory
+
 
 // Send the CHECK_PHISHING message at document_start
 chrome.runtime.sendMessage(
     { type: MessageType.CHECK_PHISHING, url: window.location.href },
     (response) => {
-        console.log('Phishing status sent at document_start:', response);
+        phishingState = response.isPhishing;
     }
 );
 
@@ -17,21 +20,15 @@ const mountApp = () => {
 
     const App = () => {
         const [isPhishing, setIsPhishing] = useState<boolean | null>(null);
-        
+
         useEffect(() => {
+            setIsPhishing(phishingState);
+
             document.body.style.paddingTop = '50px'; // Match the banner height
             return () => {
                 document.body.style.paddingTop = ''; // Reset padding on unmount
             };
-        }, []);
-
-        if (isPhishing === null) {
-            chrome.storage.local.get('phishingStatus', (result) => {
-                if (result.phishingStatus) {
-                    setIsPhishing(result.phishingStatus.isPhishing);
-                }
-            });
-        }
+        }, [phishingState]);
 
         return <Banner isPhishing={isPhishing} />;
     };
@@ -42,6 +39,13 @@ const mountApp = () => {
         </React.StrictMode>
     );
 };
+
+// Respond to messages from the popup
+chrome.runtime.onMessage.addListener((message: Message, _sender, sendResponse) => {
+    if (message.type === MessageType.GET_PHISHING_STATUS) {
+        sendResponse({ isPhishing: phishingState });
+    }
+});
 
 // Ensure the DOM is ready before mounting the app
 if (document.readyState === 'loading') {

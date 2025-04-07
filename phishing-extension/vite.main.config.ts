@@ -20,7 +20,6 @@ export default defineConfig({
     emptyOutDir: false,
     rollupOptions: {
       input: {
-        background: path.resolve(__dirname, 'src/background.ts'),
         popup: path.resolve(__dirname, 'src/popup/main.tsx')
       },
       output: {
