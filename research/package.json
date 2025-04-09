@@ -1,0 +1,16 @@
+{
+  "name": "research",
+  "version": "1.0.0",
+  "main": "src/index.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "jest",
+    "start": "ts-node src/index.ts"
+  },
+  "devDependencies": {
+    "@types/jest": "^26.0.0",
+    "jest": "^26.0.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^4.0.0"
+  }
+}

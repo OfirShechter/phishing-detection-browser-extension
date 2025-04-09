@@ -2,11 +2,19 @@
   "name": "phishing-detection-browser-extension",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "workspaces": [
+    "phishing-extension",
+    "research"
+  ],
   "scripts": {
+    "build": "pnpm -r build",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3"
+  }
 }
