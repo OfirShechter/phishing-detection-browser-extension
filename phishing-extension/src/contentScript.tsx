@@ -31,7 +31,7 @@ const mountApp = () => {
         useEffect(() => {
             setIsPhishing(phishingState);
 
-            // Listen for toggle updates
+            // Listen for updates
             chrome.runtime.onMessage.addListener((message) => {
                 if (message.type === MessageType.TOGGLE_BANNER) {
                     bannerState = message.enableBanner;

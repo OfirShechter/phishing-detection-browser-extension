@@ -35,6 +35,9 @@ chrome.runtime.onMessage.addListener(
             });
           }
         });
+        chrome.runtime.sendMessage({
+          type: MessageType.PHISHING_STATUS_UPDATED,
+        });
         sendResponse({ isPhishing });
         break;
       default:
