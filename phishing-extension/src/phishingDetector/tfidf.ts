@@ -1,4 +1,12 @@
 
+type VectorizerData = {
+    vocabulary: Record<string, number>;
+    idf: number[];
+    ngram_range: [number, number]
+    analyzer: string;
+    lowercase: boolean;
+}
+
 let vectorizerData: VectorizerData | null = null;
 
 export async function loadVectorizerData(): Promise<void> {

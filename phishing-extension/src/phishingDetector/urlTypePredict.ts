@@ -1,5 +1,10 @@
 import { extractFeatures } from "./tfidf";
 
+type LogisticRegressionData = {
+    coef: number[];
+    intercept: number;
+}
+
 let modelData: LogisticRegressionData | null = null;
 
 export async function loadModelData(): Promise<void> {
