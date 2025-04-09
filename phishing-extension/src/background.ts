@@ -1,3 +1,4 @@
+import { initialize } from "./phishingDetector/initializeModel";
 import { isPhishingSite } from "./phishingDetector/phishingDetector";
 import { Message, MessageType } from "./types/message.types";
 import { StorageKey } from "./types/storage.types";
@@ -43,3 +44,13 @@ chrome.runtime.onMessage.addListener(
     return true;
   }
 );
+
+async function main() {
+  try {
+      await initialize(); // Load data at the start
+  } catch (error) {
+      console.error("Error initializing:", error);
+  }
+}
+
+main();
