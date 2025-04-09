@@ -20,7 +20,12 @@ chrome.runtime.onMessage.addListener(
         });
         break;
       case MessageType.CHECK_PHISHING:
-        const isPhishing = isPhishingSite();
+        if (!message.url) {
+          console.error("URL is required to check for phishing.");
+          sendResponse({ isPhishing: false });
+          return;
+        }
+        const isPhishing = isPhishingSite(message.url);
         chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
           if (tabs[0].id) {
             chrome.tabs.sendMessage(tabs[0].id, {
