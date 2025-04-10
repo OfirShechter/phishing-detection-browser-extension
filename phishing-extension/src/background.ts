@@ -1,7 +1,17 @@
-import { initialize } from "./phishingDetector/initializeModel";
 import { isPhishingSite } from "./phishingDetector/phishingDetector";
+import { urlTypePredictInitialize } from "./phishingDetector/urlTypePredict";
 import { Message, MessageType } from "./types/message.types";
 import { StorageKey } from "./types/storage.types";
+
+chrome.runtime.onInstalled.addListener(async () => {
+  await urlTypePredictInitialize();
+});
+
+
+(async function init() {
+  await urlTypePredictInitialize();
+})();
+
 
 chrome.runtime.onMessage.addListener(
   (message: Message, _sender, sendResponse) => {
@@ -47,13 +57,3 @@ chrome.runtime.onMessage.addListener(
     return true;
   }
 );
-
-async function main() {
-  try {
-      await initialize(); // Load data at the start
-  } catch (error) {
-      console.error("Error initializing:", error);
-  }
-}
-
-main();
