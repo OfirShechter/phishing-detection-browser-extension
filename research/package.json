@@ -15,7 +15,9 @@
     "typescript": "^4.0.0"
   },
   "dependencies": {
+    "http-server": "^14.1.1",
     "natural": "^8.0.1",
-    "papaparse": "^5.5.2"
+    "papaparse": "^5.5.2",
+    "pyodide": "^0.27.5"
   }
 }
