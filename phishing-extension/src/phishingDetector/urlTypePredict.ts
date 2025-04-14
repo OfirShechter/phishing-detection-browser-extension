@@ -1,4 +1,5 @@
 import { extractFeatures } from "./tfidf";
+import { SparseVector } from "./types.phishingDetector";
 
 type LogisticRegressionData = {
     coef: number[];
@@ -7,6 +8,14 @@ type LogisticRegressionData = {
 
 let modelData: LogisticRegressionData | null = null;
 
+function sparseDotProduct(sparseVec: SparseVector, weights: number[]): number {
+    let dot = 0;
+    for (const i in sparseVec) {
+      dot += sparseVec[i] * weights[+i];
+    }
+    return dot;
+  }
+  
 export async function loadModelData(): Promise<void> {
     if (!modelData) {
         const response = await fetch('/model/logistic_regression_model.json');
@@ -20,11 +29,11 @@ export function urlTypePredict(url: string): boolean {
     }
 
     const features = extractFeatures(url);
-    const weights = modelData.coef;
-    const intercept = modelData.intercept;
 
-    const dot = features.reduce((sum, f, i) => sum + f * weights[i], 0);
-    const z = dot + intercept;
+    // Logistic Regression Calculation
+    const dot = sparseDotProduct(features, modelData.coef);
+    const z = dot + modelData.intercept;
     const sigmoid = 1 / (1 + Math.exp(-z));
-    return sigmoid > 0.5; // Return true for phishing, false for legitimate
+
+        return sigmoid > 0.5; // Return true for phishing, false for legitimate
 }

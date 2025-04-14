@@ -1,15 +1,15 @@
+import { initialize } from "./phishingDetector/initializeModel";
 import { isPhishingSite } from "./phishingDetector/phishingDetector";
-import { urlTypePredictInitialize } from "./phishingDetector/urlTypePredict";
 import { Message, MessageType } from "./types/message.types";
 import { StorageKey } from "./types/storage.types";
 
 chrome.runtime.onInstalled.addListener(async () => {
-  await urlTypePredictInitialize();
+  await initialize();
 });
 
 
 (async function init() {
-  await urlTypePredictInitialize();
+  await initialize();
 })();
 
 
