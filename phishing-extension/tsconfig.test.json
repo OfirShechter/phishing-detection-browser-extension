@@ -1,0 +1,11 @@
+{
+    "extends": "./tsconfig.json",
+    "compilerOptions": {
+      "esModuleInterop": true, // Enable ES module interoperability for test files
+      "resolveJsonModule": true, // Enable JSON imports for tests
+      "outDir": "./dist-tests", // Separate output directory for tests
+      "types": ["jest", "node"] // Include Jest and Node types
+    },
+    "include": ["tests/**/*"], // Include only test files
+    "exclude": ["node_modules", "dist"]
+  }

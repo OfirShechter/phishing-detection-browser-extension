@@ -1,6 +1,6 @@
-// src/phishingDetector.ts
-export function isPhishingSite(): boolean {
-    // TODO: Replace with actual ML model / heuristic logic
-    return Math.random() > 0.5;
+import { urlTypePredict } from "./urlTypePredict";
+
+export function isPhishingSite(url: string): boolean {
+    return urlTypePredict(url);
   }
   

@@ -1,9 +1,20 @@
-import { BannerContainer } from "./styles"
+import { PhishingStatus } from "../../types/state.type";
+import { BannerContainer } from "./styles";
 
-export const Banner: React.FC<{ isPhishing: boolean | null }> = ({ isPhishing }) => {
+export const phishingStatusText: Record<PhishingStatus, string> = {
+  [PhishingStatus.PHISHING]: '⚠️ This site may be a phishing attempt!',
+  [PhishingStatus.LEGITIMATE]: '✅ This site looks safe.',
+  [PhishingStatus.PROCESSING]: '🔄 Checking...',
+  [PhishingStatus.EXTENSION_INITIALIZING]: '🔄 Initializing Extension',
+  [PhishingStatus.ERROR]: '❗ An error occurred while checking the site.',
+};
+
+export const Banner: React.FC<{ phishingState: PhishingStatus }> = ({ phishingState }) => {
+  const text = phishingStatusText[phishingState] || '❗ No status available ❗';
+
   return (
-    <BannerContainer isPhishing={isPhishing}>
-      {isPhishing === null ? 'Loading...' : isPhishing ? '⚠️ This site may be a phishing attempt!' : '✅ This site looks safe.'}
+    <BannerContainer phishingState={phishingState}>
+      {text}
     </BannerContainer>
   )
 }
