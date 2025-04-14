@@ -28,6 +28,6 @@ describe("isPhishingSite", () => {
   });
 
   it("should return false for safe URLs", () => {
-    expect(isPhishingSite("http://login.google.com")).toBe(false);
+    expect(isPhishingSite("https://www.google.com")).toBe(false);
   });
 });

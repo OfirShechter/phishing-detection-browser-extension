@@ -35,5 +35,5 @@ export function urlTypePredict(url: string): boolean {
     const z = dot + modelData.intercept;
     const sigmoid = 1 / (1 + Math.exp(-z));
 
-        return sigmoid > 0.5; // Return true for phishing, false for legitimate
+    return sigmoid > 0.5; // Return true for phishing, false for legitimate
 }
