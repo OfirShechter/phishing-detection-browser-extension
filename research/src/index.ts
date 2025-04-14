@@ -1,55 +1,43 @@
-import { loadPyodide } from "pyodide";
-
-async function initialize() {
-  console.time("Loading Pyodide and Packages");
-  const pyodide = await loadPyodide();
-  await pyodide.loadPackage("scikit-learn");
-  // await pyodide.loadPackage("joblib");
-  // await pyodide.loadPackage("numpy");
-
-  // Fetch the vectorizer pickle file from the local server
-  const response = await fetch(
-    "http://localhost:8080/src/model/vectorizer.pkl"
-  );
-  const arrayBuffer = await response.arrayBuffer();
-  const uint8Array = new Uint8Array(arrayBuffer);
-
-  // Write the pickle file to Pyodide's virtual filesystem
-  pyodide.FS.writeFile("vectorizer.pkl", uint8Array);
-
-  // Fetch the model pickle file from the local server
-  const modelResponse = await fetch(
-    "http://localhost:8080/src/model/decision_tree_model.pkl"
-  );
-  const modelArrayBuffer = await modelResponse.arrayBuffer();
-  const modelUint8Array = new Uint8Array(modelArrayBuffer);
-
-  // Write the model file to Pyodide's virtual filesystem
-  pyodide.FS.writeFile("decision_tree_model.pkl", modelUint8Array);
-
-  await pyodide.runPythonAsync(`
-        import joblib
-
-        # Load the vectorizer and decision tree model as global variables
-        global vectorizer, decision_tree_model
-        vectorizer = joblib.load('vectorizer.pkl')
-        decision_tree_model = joblib.load('decision_tree_model.pkl')
-    `);
-  console.timeEnd("Loading Pyodide and Packages");
-  return pyodide;
+import { extractFeatures, SparseVector } from "./phishingDetector/tfidf";
+import LogisticRegressionModelData from "./model/logistic_regression_model.json";
+type LogisticRegressionData = {
+    coef: number[];
+    intercept: number;
 }
 
-initialize().then((pyodide) => {
-  console.time("Prediction Time");
-  const url = "http://atualizacaodedados.online"; // Example URL to test
-  // Run Python code to load the pickle and transform the URL
-  const features = pyodide.runPython(`
-        # Use the globally loaded models to transform the URL and predict
-        features = vectorizer.transform([${JSON.stringify(url)}])
-        y_pred_dt = decision_tree_model.predict(features)
-        print("Prediction:", y_pred_dt)  # Print the prediction for debugging
-        1 if y_pred_dt[0] == 'phishing' else 0  # Return 1 for phishing, 0 for not phishing
-    `);
-  console.timeEnd("Prediction Time");
-  console.log("Is phishing:", features); // Check if the prediction is 1 (phishing)
-});
+let modelData: LogisticRegressionData = LogisticRegressionModelData as LogisticRegressionData; // Initialize with the imported data
+
+function sparseDotProduct(sparseVec: SparseVector, weights: number[]): number {
+    let dot = 0;
+    for (const i in sparseVec) {
+      dot += sparseVec[i] * weights[+i];
+    }
+    return dot;
+  }
+  
+console.time("Total Execution Time");
+
+// const url = 'http://creditiperhabbogratissicuro100.blogspot.com/2011/02/habbo-crediti-gratis-sicuro-100.html'; 
+const url = 'http://djchusmusic.com'
+console.time("Feature Extraction");
+const features = extractFeatures(url);
+console.timeEnd("Feature Extraction");
+
+console.time("Logistic Regression Calculation");
+// const weights = modelData.coef;
+// const intercept = modelData.intercept;
+
+const dot = sparseDotProduct(features, modelData.coef);
+const z = dot + modelData.intercept;
+const sigmoid = 1 / (1 + Math.exp(-z));
+
+console.timeEnd("Logistic Regression Calculation");
+
+
+console.timeEnd("Total Execution Time");
+
+console.log("Is phishing:", sigmoid > 0.5);
+console.log("Prediction probability:", sigmoid); // Check the prediction probability
+console.log("Features:", features); // Check the extracted features
+console.log("Dot Product:", dot); // Check the dot product
+console.log("z value:", z); // Check the z value

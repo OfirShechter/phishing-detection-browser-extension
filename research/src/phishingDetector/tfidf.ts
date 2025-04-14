@@ -1,48 +1,48 @@
-
-import VectorizerDataJson from '../model/vectorizer.json';
+import VectorizerDataJson from "../model/vectorizer.json";
 
 type VectorizerData = {
-    vocabulary: Record<string, number>;
-    idf: number[];
-    ngram_range: number[] // [lower: number, upper: number]
-    analyzer: string; 
-    lowercase: boolean;
-}
+  vocabulary: Record<string, number>;
+  idf: number[];
+  ngram_range: number[]; // [lower: number, upper: number]
+  analyzer: string;
+  lowercase: boolean;
+};
 
 let vectorizerData: VectorizerData = VectorizerDataJson as VectorizerData; // Initialize with the imported data
 
 export async function loadVectorizerData(): Promise<void> {
   if (!vectorizerData) {
-      const response = await fetch('/model/vectorizer.json');
-      vectorizerData = await response.json();
+    const response = await fetch("/model/vectorizer.json");
+    vectorizerData = await response.json();
   }
 }
 const vocab = vectorizerData.vocabulary;
+// console.log("Vocabulary:", vocab); // Check the vocabulary
+// console.log("IDF:", vectorizerData.idf); // Check the IDF values
 const idf = vectorizerData.idf;
-
+const vocab_length = Object.keys(vocab).length;
 // Generate n-grams
 const ngram_range = vectorizerData.ngram_range;
+export type SparseVector = Record<number, number>;
 
-export function extractFeatures(url: string): number[] {
-  if (!vectorizerData) {
-      throw new Error("Vectorizer data not loaded. Call loadVectorizerData() first.");
-  }
+export function extractFeatures(url: string): SparseVector {
+  const tf: SparseVector = {};
 
-
-  const tokens: string[] = [];
-
-  const lowered = vectorizerData.lowercase ? url.toLowerCase() : url;
-  for (let n = ngram_range[0]; n <= ngram_range[1]; n++) {
-      for (let i = 0; i <= lowered.length - n; i++) {
-          tokens.push(lowered.substring(i, i + n));
-      }
-  }
-
-  const tf = new Array(Object.keys(vocab).length).fill(0);
-  tokens.forEach((token) => {
-      if (token in vocab) tf[vocab[token]] += 1;
+  const lowered = url.toLowerCase(); // vectorizerData.lowercase == true
+  const words = lowered.split(/[^a-z0-9]+/); // vectorizerData.analyzer == "word", Split by non-alphanumeric characters (e.g., "/", "?", "&", "-", "_", etc.)
+  console.log("words:", words); // Check the split words
+  // ngram_range = [1,1] => unigrams, just iterate the words
+  words.forEach((word) => {
+    const index = vocab[word];
+    if (index !== undefined) {
+      tf[index] = (tf[index] || 0) + 1;
+    }
   });
 
-  // Apply TF-IDF
-  return tf.map((freq, idx) => freq * idf[idx]);
+  const sparseTfidf: SparseVector = {};
+  for (const idx in tf) {
+    sparseTfidf[+idx] = tf[idx] * idf[+idx];
+  }
+
+  return sparseTfidf;
 }
