@@ -10,6 +10,7 @@ let phishingStatus: PhishingStatus = PhishingStatus.PROCESSING; // Store phishin
 let bannerState = false; // Store banner enabled state in memory
 
 function updatePhishingStatus(setPhishingStateCallback: React.Dispatch<React.SetStateAction<PhishingStatus>>) {
+    console.log('Checking phishing status for URL:', window.location.href);
     chrome.runtime.sendMessage(
         { type: MessageType.CHECK_PHISHING, url: window.location.href },
         (response) => {
@@ -27,6 +28,7 @@ const mountApp = () => {
 
 
     const App = () => {
+        console.log('Running content script...')
         const [phishingState, setPhishingState] = useState<PhishingStatus>(PhishingStatus.PROCESSING);
         const [isBannerEnabled, setIsBannerEnabled] = useState<boolean>(false);
         const [returnedElement, setReturnedElement] = useState<React.ReactElement>(<></>);
