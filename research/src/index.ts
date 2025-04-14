@@ -18,7 +18,7 @@ function sparseDotProduct(sparseVec: SparseVector, weights: number[]): number {
 console.time("Total Execution Time");
 
 // const url = 'http://creditiperhabbogratissicuro100.blogspot.com/2011/02/habbo-crediti-gratis-sicuro-100.html'; 
-const url = 'http://djchusmusic.com'
+const url = 'https://www.google.com'
 console.time("Feature Extraction");
 const features = extractFeatures(url);
 console.timeEnd("Feature Extraction");
