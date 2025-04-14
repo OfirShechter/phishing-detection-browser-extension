@@ -1,15 +1,15 @@
 import { SparseVector } from "./types.phishingDetector";
+import vectorizerDataJson from "../model/vectorizer.json";
 
 type VectorizerData = {
   vocabulary: Record<string, number>;
   idf: number[];
-  ngram_range: [number, number];
+  ngram_range: number[]; //[number, number];
   analyzer: string;
   lowercase: boolean;
 };
 
-let vectorizerData: VectorizerData | null = null;
-
+let vectorizerData: VectorizerData = vectorizerDataJson as VectorizerData; // Initialize with the JSON data
 function l2Normalize(vector: SparseVector): SparseVector {
   // Calculate the L2 norm
   const l2Norm = Math.sqrt(
@@ -30,20 +30,14 @@ function l2Normalize(vector: SparseVector): SparseVector {
   return normalizedVector;
 }
 
-export async function loadVectorizerData(): Promise<void> {
-  if (!vectorizerData) {
-    const response = await fetch("/model/vectorizer.json");
-    vectorizerData = await response.json();
-  }
-}
+// export async function loadVectorizerData(): Promise<void> {
+//   if (!vectorizerData) {
+//     const response = await fetch("/model/vectorizer.json");
+//     vectorizerData = await response.json();
+//   }
+// }
 
 export function extractFeatures(url: string): SparseVector {
-  if (!vectorizerData) {
-    throw new Error(
-      "Vectorizer data not loaded. Call loadVectorizerData() first."
-    );
-  }
-
   const tf: SparseVector = {};
 
   const vocab = vectorizerData.vocabulary;

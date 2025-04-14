@@ -1,12 +1,13 @@
 import { extractFeatures } from "./tfidf";
 import { SparseVector } from "./types.phishingDetector";
+import modelDataJson from "../model/logistic_regression_model.json";
 
 type LogisticRegressionData = {
     coef: number[];
     intercept: number;
 }
 
-let modelData: LogisticRegressionData | null = null;
+let modelData: LogisticRegressionData = modelDataJson as LogisticRegressionData; // Initialize with the JSON data
 
 function sparseDotProduct(sparseVec: SparseVector, weights: number[]): number {
     let dot = 0;
@@ -16,17 +17,17 @@ function sparseDotProduct(sparseVec: SparseVector, weights: number[]): number {
     return dot;
   }
   
-export async function loadModelData(): Promise<void> {
-    if (!modelData) {
-        const response = await fetch('/model/logistic_regression_model.json');
-        modelData = await response.json();
-    }
-}
+// export async function loadModelData(): Promise<void> {
+//     if (!modelData) {
+//         const response = await fetch('/model/logistic_regression_model.json');
+//         modelData = await response.json();
+//     }
+// }
 
 export function urlTypePredict(url: string): boolean {
-    if (!modelData) {
-        throw new Error("Model data not loaded. Call initialize() first.");
-    }
+    // if (!modelData) {
+    //     throw new Error("Model data not loaded. Call initialize() first.");
+    // }
 
     const features = extractFeatures(url);
 
