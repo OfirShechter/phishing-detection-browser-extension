@@ -11,11 +11,8 @@ export class TokensToNumber {
   private bias: number;
 
   constructor(modelData: Weights) {
-    console.log("TokensToNumber modelData", modelData);
     this.weight = modelData.linear_weight[0][0];
     this.bias = modelData.linear_bias[0];
-    console.log("TokensToNumber weight", this.weight);
-    console.log("TokensToNumber bias", this.bias);
   }
 
   private sigmoid(x: number): number {

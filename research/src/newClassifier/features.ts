@@ -1,5 +1,11 @@
 import { encode } from "gpt-tokenizer/model/gpt-3.5-turbo";
 import { TokensToNumber } from "./tokensToNumber";
+import domainModelData from "../model/domain_model.json";
+import tldModelData from "../model/tld_model.json";
+import pathModelData from "../model/path_model.json";
+import queryModelData from "../model/query_model.json";
+import subdomainsModelData from "../model/subdomains_model.json";
+
 
 interface UrlFeatures {
   protocol: boolean; // true if https, false else (http / ftp)
@@ -48,11 +54,11 @@ function extractUrlFeaturesObject(url: string): UrlFeatures {
   }
 }
 
-const domainTokensToNumber = new TokensToNumber({linear_weight: [[1]], linear_bias: [1]});
-const tldTokensToNumber = new TokensToNumber({linear_weight: [[1]], linear_bias: [1]});
-const pathTokensToNumber = new TokensToNumber({linear_weight: [[1]], linear_bias: [1]});
-const queryTokensToNumber = new TokensToNumber({linear_weight: [[1]], linear_bias: [1]});
-const subdomainTokensToNumber = new TokensToNumber({linear_weight: [[1]], linear_bias: [1]});
+const domainTokensToNumber = new TokensToNumber(domainModelData);
+const tldTokensToNumber = new TokensToNumber(tldModelData);
+const pathTokensToNumber = new TokensToNumber(pathModelData);
+const queryTokensToNumber = new TokensToNumber(queryModelData);
+const subdomainTokensToNumber = new TokensToNumber(subdomainsModelData);
 
 function stringToNumber(str: string, tokensToNumberCallback: (n: number[]) => number): number {
   const tokens = encode(str);
