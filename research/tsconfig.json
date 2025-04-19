@@ -2,14 +2,15 @@
     "compilerOptions": {
       "target": "es6",
       "resolveJsonModule": true,
-      "module": "commonjs",
+      "module": "Node16",
       "strict": true,
       "esModuleInterop": true,
       "skipLibCheck": true,
       "forceConsistentCasingInFileNames": true,
       "outDir": "./dist",
       "sourceMap": true,
-      "noImplicitAny": false
+      "noImplicitAny": false,
+      "moduleResolution": "node16"
     },
     "include": ["src/**/*"],
     "exclude": ["node_modules", "**/*.spec.ts"]

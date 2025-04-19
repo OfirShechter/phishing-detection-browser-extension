@@ -16,15 +16,29 @@ function setPhishingStatusFromActiveTab(setPhishingCallback: React.Dispatch<Reac
                     if (response) {
                         setPhishingCallback(response.phishingStatus)
                     }
+                    else {
+                        const url = tabs[0]?.url;
+                        if (url) {
+                            console.log('Checking phishing status for tab URL:', url);
+
+                            chrome.runtime.sendMessage(
+                                { type: MessageType.CHECK_PHISHING, url: url },
+                                (response) => {
+                                    setPhishingCallback(response.phishingStatus);
+                                }
+                            );
+                        }
+                    }
                 }
             );
         }
     });
 }
 const Popup = () => {
-    const [phishingState, setPhishingState] = useState<PhishingStatus>(PhishingStatus.PROCESSING);
+    const [phishingState, setPhishingState] = useState<PhishingStatus>(PhishingStatus.EXTENSION_INITIALIZING);
     const [isBannerEnabled, setIsBannerEnabled] = useState<boolean>(false);
 
+    console.log('Popup component rendered', phishingState, isBannerEnabled)
     useEffect(() => {
         setPhishingStatusFromActiveTab(setPhishingState)
         // Get the current banner toggle state from chrome.storage

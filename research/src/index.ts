@@ -1,43 +1,27 @@
-import { extractFeatures, SparseVector } from "./phishingDetector/tfidf";
-import LogisticRegressionModelData from "./model/logistic_regression_model.json";
-type LogisticRegressionData = {
-    coef: number[];
-    intercept: number;
-}
+import { decisionTreeUrlClassifier } from "./newClassifier/decisionTree";
+import { extractUrlFeatures } from "./newClassifier/features";
 
-let modelData: LogisticRegressionData = LogisticRegressionModelData as LogisticRegressionData; // Initialize with the imported data
+const urlPhish = "https://my.runi.ac.il/my/app/index.html#/";
+const urlGood =
+  "https://my.runi.ac.il/F5Networks-SSO-Req?SSO_ORIG_URI=aHR0cHM6Ly9pZHAucnVuaS5hYy5pbC9zYW1sL2lkcC9wcm9maWxlL3JlZGlyZWN0b3Jwb3N0L3Nzbz9TQU1MUmVxdWVzdD1sWkpiYjlzd0RJWCUyRmlxRjNXN1p6cVNNa0FkSUd3d0owVzlDa2ZkakxRTXYwSWtDV05GSGU1ZDlQdGxjc3hiQUNmUk1vSHA2UEIxd1RkTnFKWFI4dTVnRyUyRjlVZ2glMkJkbHBRMkw4MkxEZUcyR0JGQWtESFpJSVVweDJIJTJCNUZtZVhDZVJ1c3RKcGRTVjVYQUJINm9LeGh5V0clMkZZVjlnaWZteVdxM21lVjNtN1F6eU9UU3RyS3ZxWm9FenVjS3FMbTd5ZWxuSmdpVlA2Q2txTnl3T2luS2lIZyUyQkdBcGdRUzNtNVNQTjVXcXpPeFV5VWhWaFVuMW15ajlzb0EyRlVYVUp3SkRoWGpjdDhiMVFHTWxPYUQ4eERqY2RsV3FXUmUyeVVSeG1zZDVZQ0o3SzhzN2JSeUpMZE0lMkYyZE5kUjM2RSUyRm92eXVKanclMkYzZiUyQmRQemRjV0F4eUhtUEJvVm5KeTB5TUZTWm03dUg4bExEbiUyQmlmWldtVWFacjYlMkJuV2s5TkpONmZ6OGYwJTJCT2wwWnR2MVlDSEdsUHoyVFd3ZEJtZ2d3SUMyNXRkajF0T3hmSXdBaCUyRjNSYWlWJTJGSmUlMkJzN3lEOG42JTJGSWlyR2ltclFkVzBWdnlLRlVyY0ltUnFxMSUyRlhIbkVRSnVXUEE5TXI2ZFRGOGU1ZlkzJlJlbGF5U3RhdGU9aHR0cHMlM0ElMkYlMkZtb29kbGUucnVuaS5hYy5pbCUyRjIwMjUlMkZteSUyRiZTaWdBbGc9aHR0cCUzQSUyRiUyRnd3dy53My5vcmclMkYyMDAxJTJGMDQlMkZ4bWxkc2lnLW1vcmUlMjNyc2Etc2hhMjU2JlNpZ25hdHVyZT1EJTJCNUJPYzR4RklpdUw3SnNCdUR3TG96YU9TUzFBVnVya1JUTlRaV0JkalhFWHB6SVdmdUZzOVI4cWJ3WTBlWVlFaTdab2p4VndRWndWakxXQjlxdld4ZnJIMVJvTGI0eU1LOThsQmxQRXBpbmVsTncxNzlndUZhV01jQWtVeE41WVFLQjV0MDNWbjBHME1PUGRwN0p2akdBNG5XTWZhaDhjN0IyM2slMkJtQTBRQk9IJTJCSURBNCUyRkVnZkJGNTdTRjByWEZ0MlB4bVVQaTFlUEIzQjl0bSUyRkVWSkkzTjk3SkM4OURZdGEzb2tiajZUeUElMkY5eUhjeTNMVjhLaTBBbUM3TFVTUzlIS29tREo5QyUyQkloZVJQUXpPSmlDc20lMkZCbkdvQTdLMXV5WFlYVzVLODg3NEp0VFlSa3VCM2hFYyUyQkxyRUhER2dHRmdBak5XQmFxNWdKaEZiVDFBQmclM0QlM0Q%3D";
 
-function sparseDotProduct(sparseVec: SparseVector, weights: number[]): number {
-    let dot = 0;
-    for (const i in sparseVec) {
-      dot += sparseVec[i] * weights[+i];
-    }
-    return dot;
-  }
-  
+function testUrl(url: string) {
 console.time("Total Execution Time");
 
-// const url = 'http://creditiperhabbogratissicuro100.blogspot.com/2011/02/habbo-crediti-gratis-sicuro-100.html'; 
-const url = 'https://www.google.com'
-console.time("Feature Extraction");
-const features = extractFeatures(url);
-console.timeEnd("Feature Extraction");
+  console.time("Feature Extraction");
+  const features = extractUrlFeatures(url);
+  console.timeEnd("Feature Extraction");
 
-console.time("Logistic Regression Calculation");
-// const weights = modelData.coef;
-// const intercept = modelData.intercept;
+  console.time("Prediction");
+  const result = decisionTreeUrlClassifier.predict(features); // Assuming you have a predict method in your classifier
+  console.timeEnd("Prediction");
 
-const dot = sparseDotProduct(features, modelData.coef);
-const z = dot + modelData.intercept;
-const sigmoid = 1 / (1 + Math.exp(-z));
+  console.log("Extracted Features:", features, "Prediction Result:", result);
+  console.timeEnd("Total Execution Time");
+}
 
-console.timeEnd("Logistic Regression Calculation");
+console.log("Testing URL: %s", urlPhish);
+testUrl(urlPhish);
 
-
-console.timeEnd("Total Execution Time");
-
-console.log("Is phishing:", sigmoid > 0.5);
-console.log("Prediction probability:", sigmoid); // Check the prediction probability
-console.log("Features:", features); // Check the extracted features
-console.log("Dot Product:", dot); // Check the dot product
-console.log("z value:", z); // Check the z value
+console.log("Testing URL: %s", urlGood);
+testUrl(urlGood);
