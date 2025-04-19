@@ -17,6 +17,9 @@ importers:
 
   phishing-extension:
     dependencies:
+      gpt-tokenizer:
+        specifier: ^2.9.0
+        version: 2.9.0
       react:
         specifier: ^19.0.0
         version: 19.1.0
