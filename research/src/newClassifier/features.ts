@@ -98,7 +98,7 @@ function feturesObjectToArray(features: UrlFeatures): number[] {
     features.hasDoubleSlash ? 1 : 0,
     features.hyphenCount ? 1 : 0,
     features.numbersInSubdomains,
-    features.hasDomainLikePath ? 1 : 0,
+    features.hasDomainLikePath ? 0 : 0, // bad effect on the model, so we set it to 0 for noe
     features.numOfSubdomains,
   ];
 }
