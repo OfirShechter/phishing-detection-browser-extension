@@ -19,10 +19,15 @@ interface UrlFeatures {
   pathLength: number;
   queryLength: number;
   urlLength: number;
-  hasAtSymbol: boolean;
+  hasAtOrTildSymbol: boolean;
   hasDoubleSlash: boolean;
-  hasHyphen: boolean;
+  hyphenCount: number;
+  numbersInSubdomains: number;
+  hasDomainLikePath: boolean;
+  numOfSubdomains: number;
 }
+
+const domainLikePattern = /(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}/;
 
 function extractUrlFeaturesObject(url: string): UrlFeatures {
   try {
@@ -31,6 +36,8 @@ function extractUrlFeaturesObject(url: string): UrlFeatures {
     const domain = hostnameParts.slice(-2, -1)[0] || "";
     const tld = hostnameParts.slice(-1)[0] || "";
     const subdomains = hostnameParts.slice(0, -2);
+
+    const hasDomainLikePath = domainLikePattern.test(parsed.pathname);
 
     return {
       protocol: parsed.protocol.replace(":", "") == "https",
@@ -44,9 +51,14 @@ function extractUrlFeaturesObject(url: string): UrlFeatures {
       pathLength: parsed.pathname.length,
       queryLength: parsed.search.length,
       urlLength: url.length,
-      hasAtSymbol: url.includes("@"),
+      hasAtOrTildSymbol: url.includes("@") || url.includes("~"),
       hasDoubleSlash: url.includes("//", 8),
-      hasHyphen: parsed.hostname.includes("-"),
+      hyphenCount: hasDomainLikePath ? (url.match(/-/g) || []).length : (parsed.hostname ? (parsed.hostname.match(/-/g) || []).length : 0),
+      numbersInSubdomains: subdomains.reduce((count, part) => {
+        return count + (part.match(/\d/g)?.length || 0); // Match digits and count them
+      }, 0),
+      hasDomainLikePath: hasDomainLikePath,
+      numOfSubdomains: subdomains.length,
     };
   } catch (e) {
     console.error("Invalid URL:", url);
@@ -56,8 +68,8 @@ function extractUrlFeaturesObject(url: string): UrlFeatures {
 
 const domainTokensToNumber = new TokensToNumber(domainModelData);
 const tldTokensToNumber = new TokensToNumber(tldModelData);
-const pathTokensToNumber = new TokensToNumber(pathModelData);
-const queryTokensToNumber = new TokensToNumber(queryModelData);
+// const pathTokensToNumber = new TokensToNumber(pathModelData);
+// const queryTokensToNumber = new TokensToNumber(queryModelData);
 const subdomainTokensToNumber = new TokensToNumber(subdomainsModelData);
 
 function stringToNumber(str: string, tokensToNumberCallback: (n: number[]) => number): number {
@@ -76,15 +88,18 @@ function feturesObjectToArray(features: UrlFeatures): number[] {
     subDomainsAsNumber, // subdomains emmbedded value
     stringToNumber(features.domain, domainTokensToNumber.forward.bind(domainTokensToNumber)), // domain emmbedded value
     stringToNumber(features.tld, tldTokensToNumber.forward.bind(tldTokensToNumber)), // tld emmbedded value
-    stringToNumber(features.path ?? "", pathTokensToNumber.forward.bind(pathTokensToNumber)), // path emmbedded value
-    stringToNumber(features.query ?? "", queryTokensToNumber.forward.bind(queryTokensToNumber)), // query emmbedded value
+    // stringToNumber(features.path ?? "", pathTokensToNumber.forward.bind(pathTokensToNumber)), // path emmbedded value
+    // stringToNumber(features.query ?? "", queryTokensToNumber.forward.bind(queryTokensToNumber)), // query emmbedded value
     features.port ? 1 : 0,
-    features.path.length,
-    features.query.length,
-    features.urlLength,
-    features.hasAtSymbol ? 1 : 0,
+    // features.path.length,
+    // features.query.length,
+    // features.urlLength,
+    features.hasAtOrTildSymbol ? 1 : 0,
     features.hasDoubleSlash ? 1 : 0,
-    features.hasHyphen ? 1 : 0,
+    features.hyphenCount ? 1 : 0,
+    features.numbersInSubdomains,
+    features.hasDomainLikePath ? 1 : 0,
+    features.numOfSubdomains,
   ];
 }
 

@@ -1,6 +1,4 @@
 // tokensToNumber.ts
-import { encode } from "gpt-tokenizer/model/gpt-3.5-turbo";
-
 type Weights = {
   linear_weight: number[][]; // [ [w] ]
   linear_bias: number[];     // [b]

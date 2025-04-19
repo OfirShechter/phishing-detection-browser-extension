@@ -1,11 +1,19 @@
+import { decisionTreeUrlClassifier } from "./newClassifier/decisionTree";
 import { extractUrlFeatures } from "./newClassifier/features";
 console.time("Total Execution Time");
 
-const url = 'http://creditiperhabbogratissicuro100.blogspot.com/2011/02/habbo-crediti-gratis-sicuro-100.html'; 
+const url = 'http://accountlockseohive.vercel.app/get_help'; 
 
 console.time("Feature Extraction");
 const features = extractUrlFeatures(url);
 console.timeEnd("Feature Extraction");
 
-console.log("Extracted Features:", features);
+console.time("Prediction");
+const result = decisionTreeUrlClassifier.predict(features); // Assuming you have a predict method in your classifier
+console.timeEnd("Prediction");
+
+console.log(
+    "Extracted Features:", features, 
+    "Prediction Result:", result
+);
 console.timeEnd("Total Execution Time");
