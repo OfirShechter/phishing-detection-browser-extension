@@ -35,25 +35,25 @@ chrome.runtime.onMessage.addListener(
   (message: Message, _sender, sendResponse) => {
     switch (message.type) {
       case MessageType.TOGGLE_BANNER:
-        const isEnabled = message.enableBanner;
+        { const isEnabled = message.enableBanner;
         chrome.storage.local.set({ [StorageKey.BANNER_ENABLED]: isEnabled });
         notifyContentScriptActiveTab({
           type: MessageType.TOGGLE_BANNER,
           enableBanner: message.enableBanner,
         })
-        break;
-      case MessageType.CHECK_PHISHING:
-        if (!message.url) {
-          console.error("URL is required to check for phishing.");
-          sendResponse({ PhishingStatus: PhishingStatus.ERROR });
+        break; }
+      case MessageType.CHECK_PHISHING: {
+        if (!message.url || !message.domFeatures) {
+          console.error("URL and DOM features are required to check for phishing.");
+          sendResponse({PhishingStatus: PhishingStatus.ERROR});
           return;
         }
-        const isPhishing = isPhishingSite(message.url);
+        const isPhishing = isPhishingSite(message.url, message.domFeatures);
         const phishingStatus = isPhishing ? PhishingStatus.PHISHING : PhishingStatus.LEGITIMATE;
         notifyContentScriptAndPopup({type: MessageType.PHISHING_STATUS_UPDATED, phishingStatus});
         console.log("Phishing status updated:", isPhishing);
         sendResponse({ phishingStatus });
-        break;
+        break; }
       default:
         console.error("Unknown message type:", message.type);
         break;
