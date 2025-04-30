@@ -3,6 +3,7 @@ import { MessageType } from '../types/message.types';
 import { StorageKey } from '../types/storage.types';
 import { PhishingStatus } from '../types/state.type';
 import { phishingStatusText } from '../components/Banner';
+import {extractDOMFeatures} from "../phishingDetector/domFeaturesExtractor.ts";
 
 function setPhishingStatusFromActiveTab(setPhishingCallback: React.Dispatch<React.SetStateAction<PhishingStatus>>
 ) {
@@ -22,7 +23,7 @@ function setPhishingStatusFromActiveTab(setPhishingCallback: React.Dispatch<Reac
                             console.log('Checking phishing status for tab URL:', url);
 
                             chrome.runtime.sendMessage(
-                                { type: MessageType.CHECK_PHISHING, url: url },
+                                { type: MessageType.CHECK_PHISHING, url: url, domFeatures: extractDOMFeatures() },
                                 (response) => {
                                     setPhishingCallback(response.phishingStatus);
                                 }
