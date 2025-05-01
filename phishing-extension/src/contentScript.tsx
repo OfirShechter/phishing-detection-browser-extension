@@ -4,8 +4,7 @@ import { Banner } from './components/Banner';
 import { Message, MessageType } from './types/message.types';
 import { StorageKey } from './types/storage.types';
 import { PhishingStatus } from './types/state.type';
-// import {safeExtractDOMFeatures} from "./phishingDetector/domFeaturesExtractor.ts";
-// import { safeExtractDOMFeatures } from './phishingDetector/domFeaturesExtractor';
+import { safeExtractDOMFeatures } from './phishingDetector/domFeaturesExtractor';
 
 // import { isModelReady } from './phishingDetector/initializeModel';
 
@@ -19,7 +18,7 @@ function updatePhishingStatus(setPhishingStateCallback: React.Dispatch<React.Set
         {
             type: MessageType.CHECK_PHISHING,
             url: window.location.href,
-            domFeatures: null//safeExtractDOMFeatures()
+            domFeatures: safeExtractDOMFeatures()
         },
         (response) => {
             console.log('got response from background script', response)

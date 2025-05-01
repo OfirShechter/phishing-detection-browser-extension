@@ -1,4 +1,3 @@
-debugger;
 export interface DOMFeatures {
     forms: number;
     inputs: number;
