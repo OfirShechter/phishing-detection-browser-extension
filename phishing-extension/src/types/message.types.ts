@@ -1,4 +1,5 @@
 import { PhishingStatus } from "./state.type";
+import {DOMFeatures} from "../phishingDetector/domFeaturesExtractor.ts";
 
 export enum MessageType {
     CHECK_PHISHING = 'CHECK_PHISHING',
@@ -13,4 +14,5 @@ export type Message = {
     url?: string;
     enableBanner?: boolean;
     phishingStatus?: PhishingStatus;
+    domFeatures?: DOMFeatures;
 }
