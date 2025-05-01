@@ -1,3 +1,4 @@
+debugger;
 export interface DOMFeatures {
     forms: number;
     inputs: number;
@@ -16,6 +17,16 @@ export interface DOMFeatures {
     hasEval: boolean;
 }
 
+export function safeExtractDOMFeatures(): DOMFeatures | null {
+    try {
+        return extractDOMFeatures();
+    } catch (err) {
+        console.error("DOM feature extraction failed", err);
+        return null;
+    }
+}
+
+
 export function extractDOMFeatures(): DOMFeatures {
     const getExternalResourceRatio = () => {
         const resources = Array.from(document.querySelectorAll('script[src], img[src], link[href]'));
@@ -33,17 +44,21 @@ export function extractDOMFeatures(): DOMFeatures {
         return keywords.reduce((count, word) => count + (bodyText.includes(word) ? 1 : 0), 0);
     };
 
-    const getDOMDepth = (node: Node = document.body): number => {
-        if (!node.hasChildNodes()) return 1;
-
+    const getDOMDepth = (node: Node = document.body, depth = 0, maxDepth = 50): number => {
+        if (!node) {
+            return depth;
+        }
+        if (!node.hasChildNodes() || depth >= maxDepth) return 1;
         const childDepths = Array.from(node.childNodes)
             .filter(child => child.nodeType === Node.ELEMENT_NODE)
-            .map(child => getDOMDepth(child));
-
+            .map(child => getDOMDepth(child, depth + 1, maxDepth));
         return 1 + (childDepths.length > 0 ? Math.max(...childDepths) : 0);
     };
 
     const getMaxChildrenCount = (root: Element = document.body): number => {
+        if (!root) {
+            return 0;
+        }
         const allElements = root.querySelectorAll("*");
         if (allElements.length === 0) return 0;
 

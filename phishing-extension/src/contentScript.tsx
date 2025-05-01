@@ -4,7 +4,8 @@ import { Banner } from './components/Banner';
 import { Message, MessageType } from './types/message.types';
 import { StorageKey } from './types/storage.types';
 import { PhishingStatus } from './types/state.type';
-import { extractDOMFeatures } from './phishingDetector/domFeaturesExtractor';
+// import {safeExtractDOMFeatures} from "./phishingDetector/domFeaturesExtractor.ts";
+// import { safeExtractDOMFeatures } from './phishingDetector/domFeaturesExtractor';
 
 // import { isModelReady } from './phishingDetector/initializeModel';
 
@@ -13,13 +14,12 @@ let bannerState = false; // Store banner enabled state in memory
 
 function updatePhishingStatus(setPhishingStateCallback: React.Dispatch<React.SetStateAction<PhishingStatus>>) {
     console.log('Checking phishing status for URL:', window.location.href);
-    const domFeatures = extractDOMFeatures();
 
     chrome.runtime.sendMessage(
         {
             type: MessageType.CHECK_PHISHING,
             url: window.location.href,
-            domFeatures: domFeatures
+            domFeatures: null//safeExtractDOMFeatures()
         },
         (response) => {
             console.log('got response from background script', response)

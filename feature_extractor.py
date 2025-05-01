@@ -28,8 +28,17 @@ def extract_features_for_url(row):
         'inlineStyles': 0, 'phishingKeywordHits': 0, 'usesHTTPS': url.startswith('https'), 'hasEval': 0
     }
 
-    def get_dom_depth(soup):
-        def depth(el): return 1 + max((depth(c) for c in el.contents if hasattr(c, 'contents')), default=0)
+    def get_dom_depth(soup, max_depth=50):
+        def depth(el, current_depth=0):
+            if current_depth >= max_depth or not hasattr(el, 'contents'):
+                return 1
+            child_depths = [
+                depth(c, current_depth + 1)
+                for c in el.contents
+                if hasattr(c, 'contents')
+            ]
+            return 1 + (max(child_depths) if child_depths else 0)
+
         return depth(soup)
 
     def get_max_children(soup):
@@ -79,7 +88,7 @@ def extract_features_for_url(row):
 
 if __name__ == "__main__":
     df = pd.read_csv('./URL-improved dataset.csv')
-    records = df.sample(1000).to_dict(orient="records")
+    records = df.sample(50000).to_dict(orient="records")
 
     results = []
     print("Starting multiprocessing scrape...")

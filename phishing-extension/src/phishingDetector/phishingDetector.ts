@@ -1,6 +1,6 @@
-import { decisionTreeUrlClassifier } from "./decisionTree";
-import { extractUrlFeatures } from "./urlFeaturesExtractor";
-import { DOMFeatures } from "./domFeaturesExtractor";
+import {decisionTreeUrlClassifier} from "./decisionTree";
+import {extractUrlFeatures} from "./urlFeaturesExtractor";
+import {DOMFeatures} from "./domFeaturesExtractor";
 import {predictDOMPhishing} from "./domPredictor.ts";
 
 function urlTypePredict(url: string): boolean {
@@ -12,19 +12,22 @@ function urlTypePredict(url: string): boolean {
     return isPhishing;
 }
 
-export function detectPhishingFromDOM(domFeatures: DOMFeatures): boolean {
+export function detectPhishingFromDOM(domFeatures: DOMFeatures | null | undefined): boolean {
     const start = performance.now();
-    const result = predictDOMPhishing(domFeatures);
+    let result;
+    if (domFeatures == null) {
+        result = true;
+    } else {
+        result = predictDOMPhishing(domFeatures);
+    }
     const duration = performance.now() - start;
     console.log(`DOM phishing check: ${result} (took ${duration.toFixed(1)} ms)`);
     return result;
 }
 
-export function isPhishingSite(url: string, domFeatures: DOMFeatures): boolean {
+export function isPhishingSite(url: string, domFeatures: DOMFeatures | null | undefined): boolean {
     const isDOMPhishing = detectPhishingFromDOM(domFeatures);
     const isURLPhishing = urlTypePredict(url); // must be sync!
 
-    const result = isDOMPhishing && isURLPhishing;
-    console.log(`Final phishing verdict: ${result}`);
-    return result;
+    return isDOMPhishing && isURLPhishing;
 }
