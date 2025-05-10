@@ -1,5 +1,6 @@
 // import { initialize } from "./phishingDetector/initializeModel";
 import {
+  isPhishingSite,
   isPhishingSiteByDom,
   isSiteLegitimateByUrl,
 } from "./phishingDetector/phishingDetector";
@@ -97,6 +98,23 @@ chrome.runtime.onMessage.addListener(
         console.log("Phishing status updated:", isPhishing);
         sendResponse({ phishingStatus });
         break;
+      case MessageType.CHECK_PHISHING:
+          if (!message.domFeatures || !message.url) {
+            console.error("URL and DOM are required to check for phishing.");
+            sendResponse({ PhishingStatus: PhishingStatus.ERROR });
+            return;
+          }
+          const isPhis = isPhishingSite(message.url, message.domFeatures);
+          const phishStatus = isPhis
+            ? PhishingStatus.PHISHING
+            : PhishingStatus.LEGITIMATE;
+          notifyContentScriptAndPopup({
+            type: MessageType.PHISHING_STATUS_UPDATED,
+            phishingStatus: phishStatus,
+          });
+          console.log("Phishing status updated:", isPhis);
+          sendResponse({ phishingStatus: phishStatus });
+          break;
       default:
         console.error("Unknown message type:", message.type);
         break;

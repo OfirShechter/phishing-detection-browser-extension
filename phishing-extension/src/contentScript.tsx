@@ -45,6 +45,23 @@ function checkLegitimateByUrl(setPhishingStateCallback: React.Dispatch<React.Set
 }
 
 
+function checkPhishing(setPhishingStateCallback: React.Dispatch<React.SetStateAction<PhishingStatus>>) {
+    console.log('Checking phishing status by ALL (dom and url) for URL:', window.location.href);
+
+    chrome.runtime.sendMessage(
+        {
+            type: MessageType.CHECK_PHISHING,
+            domFeatures: extractDOMFeatures(),
+            url: window.location.href,
+        },
+        (response) => {
+            console.log('got response from background script', response)
+            phishingStatus = response.phishingStatus
+            setPhishingStateCallback(phishingStatus);
+        }
+    );
+}
+
 
 const mountApp = () => {
     const mount = document.createElement('div');
@@ -104,6 +121,7 @@ const mountApp = () => {
                     }
                 );
                 checkPhishingByDom(setPhishingState);
+                checkPhishing(setPhishingState);
             }
         }, [isBodyReady])
 
