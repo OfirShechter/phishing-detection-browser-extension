@@ -12,11 +12,8 @@ interface UrlFeatures {
   domain: string;
   tld: string;
   port: boolean;
-  hasAtOrTildSymbol: boolean;
   hasDoubleSlash: boolean;
-  hyphenCount: number;
   numbersInSubdomains: number;
-  hasDomainLikePath: boolean;
   numOfSubdomains: number;
 }
 // the below parameters are not used in the current implementation but can be used in the future (not used because luck of good dataset)
@@ -25,9 +22,9 @@ interface UrlFeatures {
 // pathLength: number;
 // queryLength: number;
 // urlLength: number;
-
-
-const domainLikePattern = /(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}/;
+// hasAtOrTildSymbol: boolean;
+// hyphenCount: number;
+// hasDomainLikePath: boolean;
 
 function extractUrlFeaturesObject(url: string): UrlFeatures {
   try {
@@ -37,8 +34,6 @@ function extractUrlFeaturesObject(url: string): UrlFeatures {
     const tld = hostnameParts.slice(-1)[0] || "";
     const subdomains = hostnameParts.slice(0, -2);
 
-    const hasDomainLikePath = domainLikePattern.test(parsed.pathname);
-
     return {
       protocol: parsed.protocol.replace(":", "") == "https",
       hasAuth: parsed.username !== "" || parsed.password !== "",
@@ -46,13 +41,10 @@ function extractUrlFeaturesObject(url: string): UrlFeatures {
       domain,
       tld,
       port: parsed.port ? true : false,
-      hasAtOrTildSymbol: url.includes("@") || url.includes("~"),
       hasDoubleSlash: url.includes("//", 8),
-      hyphenCount: hasDomainLikePath ? (url.match(/-/g) || []).length : (parsed.hostname ? (parsed.hostname.match(/-/g) || []).length : 0),
       numbersInSubdomains: subdomains.reduce((count, part) => {
         return count + (part.match(/\d/g)?.length || 0); // Match digits and count them
       }, 0),
-      hasDomainLikePath: hasDomainLikePath,
       numOfSubdomains: subdomains.length,
     };
   } catch (e) {
@@ -82,11 +74,8 @@ function feturesObjectToArray(features: UrlFeatures): number[] {
     stringToNumber(features.domain, domainTokensToNumber.forward.bind(domainTokensToNumber)), // domain emmbedded value
     stringToNumber(features.tld, tldTokensToNumber.forward.bind(tldTokensToNumber)), // tld emmbedded value
     features.port ? 1 : 0,
-    features.hasAtOrTildSymbol ? 1 : 0,
     features.hasDoubleSlash ? 1 : 0,
-    features.hyphenCount ? 1 : 0,
     features.numbersInSubdomains,
-    features.hasDomainLikePath ? 0 : 0, // bad effect on the model, so we set it to 0 for noe
     features.numOfSubdomains,
   ];
 }

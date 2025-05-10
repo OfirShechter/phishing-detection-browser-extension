@@ -1,4 +1,5 @@
-import tree from '../model/decision_tree_model.json';
+import htmlTree from '../model/html_decision_tree_model.json';
+import fullTree from '../model/full_decision_tree_model.json';
 
 type TreeNode = {
   feature?: number;
@@ -31,4 +32,6 @@ export class DecisionTreeClassifier {
   }
 }
 
-export const decisionTreeUrlClassifier = new DecisionTreeClassifier(tree);
+export const htmlDecisionTreeClassifier = new DecisionTreeClassifier(htmlTree);
+
+export const fullDecisionTreeClassifier = new DecisionTreeClassifier(fullTree);
