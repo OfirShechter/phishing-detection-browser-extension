@@ -18,7 +18,9 @@ export interface DOMFeatures {
 
 export function safeExtractDOMFeatures(): DOMFeatures | null {
     try {
-        return extractDOMFeatures();
+        var dom = extractDOMFeatures();
+        console.log("DOM features extracted:", dom);
+        return dom;
     } catch (err) {
         console.error("DOM feature extraction failed", err);
         return null;
@@ -28,19 +30,26 @@ export function safeExtractDOMFeatures(): DOMFeatures | null {
 
 export function extractDOMFeatures(): DOMFeatures {
     const getExternalResourceRatio = () => {
-        const resources = Array.from(document.querySelectorAll('script[src], img[src], link[href]'));
-        const externalCount = resources.filter(res => {
-            const src = res.getAttribute('src') || res.getAttribute('href');
-            if (!src) return false;
-            return !src.includes(window.location.hostname);
-        }).length;
-        return resources.length === 0 ? 0 : externalCount / resources.length;
+      const originHost = window.location.hostname;
+      const resources = Array.from(document.querySelectorAll('script[src], img[src], link[href]'));
+      const externalCount = resources.filter(res => {
+        const src = res.getAttribute('src') || res.getAttribute('href');
+        if (!src) return false;
+        try {
+          const host = new URL(src, window.location.href).hostname;
+          return host !== originHost;
+        } catch { return false; }
+      }).length;
+      return resources.length === 0 ? 0 : externalCount / resources.length;
     };
 
     const getPhishingKeywordsCount = () => {
-        const keywords = ['verify', 'account', 'login', 'password', 'secure', 'update', 'confirm'];
-        const bodyText = document.body?.innerText?.toLowerCase() || '';
-        return keywords.reduce((count, word) => count + (bodyText.includes(word) ? 1 : 0), 0);
+      const keywords = ['verify', 'account', 'login', 'password', 'secure', 'update', 'confirm'];
+      const bodyText = document.body?.innerText?.toLowerCase() || '';
+      return keywords.reduce((count, word) => {
+        const matches = bodyText.match(new RegExp(word, 'g'));
+        return count + (matches ? matches.length : 0);
+      }, 0);
     };
 
     const getDOMDepth = (node: Node = document.body, depth = 0, maxDepth = 50): number => {
@@ -70,11 +79,16 @@ export function extractDOMFeatures(): DOMFeatures {
         return maxChildren;
     };
 
+    const hasEval = Array.from(document.querySelectorAll('script')).some(script => {
+        const code = script.textContent || '';
+        return code.includes('eval');
+    });
+
     return {
         forms: document.querySelectorAll('form').length,
         inputs: document.querySelectorAll('input').length,
         iframes: document.querySelectorAll('iframe').length,
-        scripts: document.querySelectorAll('script[src]').length,
+        scripts: document.querySelectorAll('script').length,
         images: document.querySelectorAll('img').length,
         buttons: document.querySelectorAll('button').length,
         domDepth: getDOMDepth(),
@@ -85,6 +99,6 @@ export function extractDOMFeatures(): DOMFeatures {
         inlineStyles: document.querySelectorAll('[style]').length,
         phishingKeywordHits: getPhishingKeywordsCount(),
         usesHTTPS: window.location.protocol === 'https:',
-        hasEval: Array.from(document.querySelectorAll('script')).some(s => s.innerText.includes('eval')),
+        hasEval: hasEval,
     };
 }

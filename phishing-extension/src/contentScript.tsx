@@ -6,23 +6,22 @@ import { StorageKey } from './types/storage.types';
 import { PhishingStatus } from './types/state.type';
 import { safeExtractDOMFeatures } from './phishingDetector/domFeaturesExtractor';
 
-// import { isModelReady } from './phishingDetector/initializeModel';
-
-let phishingStatus: PhishingStatus = PhishingStatus.PROCESSING; // Store phishing state in memory
-let bannerState = false; // Store banner enabled state in memory
+let phishingStatus: PhishingStatus = PhishingStatus.PROCESSING;
+let bannerState = false;
 
 function updatePhishingStatus(setPhishingStateCallback: React.Dispatch<React.SetStateAction<PhishingStatus>>) {
     console.log('Checking phishing status for URL:', window.location.href);
+    const features = safeExtractDOMFeatures();
 
     chrome.runtime.sendMessage(
         {
             type: MessageType.CHECK_PHISHING,
             url: window.location.href,
-            domFeatures: safeExtractDOMFeatures()
+            domFeatures: features
         },
         (response) => {
-            console.log('got response from background script', response)
-            phishingStatus = response.phishingStatus
+            console.log('Got response from background script', response);
+            phishingStatus = response.phishingStatus;
             setPhishingStateCallback(phishingStatus);
         }
     );
@@ -31,37 +30,34 @@ function updatePhishingStatus(setPhishingStateCallback: React.Dispatch<React.Set
 const mountApp = () => {
     const mount = document.createElement('div');
     mount.id = 'phishing-banner-root';
-    document.documentElement.appendChild(mount); // Append to <html>
-
+    document.documentElement.appendChild(mount);
 
     const App = () => {
-        console.log('Running content script...')
         const [phishingState, setPhishingState] = useState<PhishingStatus>(PhishingStatus.PROCESSING);
         const [isBannerEnabled, setIsBannerEnabled] = useState<boolean>(false);
-        const [returnedElement, setReturnedElement] = useState<React.ReactElement>(<></>);
 
         useEffect(() => {
-            // chrome.storage.local.get("isInitialized", (result) => {
-            //     if (result.isInitialized == true) {
-            //         updatePhishingStatus(setPhishingState);
-            //     };
-            // });
-            updatePhishingStatus(setPhishingState)
-            // if (isModelReady()) {
-            //     updatePhishingStatus(setPhishingState);
-            // }
+            const runFeatureExtraction = () => updatePhishingStatus(setPhishingState);
 
-            // Listen for updates
-            chrome.runtime.onMessage.addListener((message) => {
-                if (message.type === MessageType.TOGGLE_BANNER) {
+            if (document.readyState === 'complete') {
+                runFeatureExtraction();
+            } else {
+                window.addEventListener('load', runFeatureExtraction, { once: true });
+            }
+
+            const listener = (message: Message) => {
+                if (message.type === MessageType.TOGGLE_BANNER && typeof message.enableBanner === 'boolean') {
                     bannerState = message.enableBanner;
                     setIsBannerEnabled(bannerState);
                 }
-                if (message.type === MessageType.PHISHING_STATUS_UPDATED) {
+                if (message.type === MessageType.PHISHING_STATUS_UPDATED && message.phishingStatus !== undefined) {
                     phishingStatus = message.phishingStatus;
-                    setPhishingState(message.phishingStatus);
+                    setPhishingState(phishingStatus);
                 }
-            });
+            };
+
+
+            chrome.runtime.onMessage.addListener(listener);
 
             chrome.storage.local.get(StorageKey.BANNER_ENABLED, (result) => {
                 const bannerStatus = result[StorageKey.BANNER_ENABLED];
@@ -69,24 +65,19 @@ const mountApp = () => {
                     setIsBannerEnabled(bannerStatus);
                 }
             });
+
+            return () => {
+                chrome.runtime.onMessage.removeListener(listener);
+            };
         }, []);
 
         useEffect(() => {
-            console.log('isPhishing', phishingState)
-            if (isBannerEnabled) {
-                setReturnedElement(<Banner phishingState={phishingState} />);
-                if (document.body) {
-                    document.body.style.marginTop = '50px';
-                }
-            } else {
-                setReturnedElement(<></>);
-                if (document.body) {
-                    document.body.style.marginTop = '0px';
-                }
+            if (document.body) {
+                document.body.style.marginTop = isBannerEnabled ? '50px' : '0px';
             }
-        }, [isBannerEnabled, phishingState, document.body])
+        }, [isBannerEnabled]);
 
-        return returnedElement
+        return isBannerEnabled ? <Banner phishingState={phishingState} /> : <></>;
     };
 
     ReactDOM.createRoot(mount).render(
@@ -96,13 +87,12 @@ const mountApp = () => {
     );
 };
 
-// Respond to messages from the popup
+// Respond to popup queries for current phishing status
 chrome.runtime.onMessage.addListener((message: Message, _sender, sendResponse) => {
     if (message.type === MessageType.GET_PHISHING_STATUS) {
-        console.log('got event GET_PHISHING_STATUS at content script, sending response:', {phishingStatus})
-        sendResponse({ phishingStatus: phishingStatus });
+        console.log('GET_PHISHING_STATUS received, responding:', { phishingStatus });
+        sendResponse({ phishingStatus });
     }
 });
-
 
 mountApp();
