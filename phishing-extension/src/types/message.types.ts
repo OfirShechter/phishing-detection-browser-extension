@@ -1,12 +1,13 @@
 import { PhishingStatus } from "./state.type";
-import {DOMFeatures} from "../phishingDetector/domFeaturesExtractor.ts";
 
 export enum MessageType {
-    CHECK_PHISHING = 'CHECK_PHISHING',
+    CHECK_LEGITIMATE_BY_URL = 'CHECK_LEGITIMATE_BY_URL',
+    CHECK_PHISHING_BY_DOM = 'CHECK_PHISHING_BY_DOM',
     GET_PHISHING_STATUS = 'GET_PHISHING_STATUS',
     PHISHING_STATUS_UPDATED = 'PHISHING_STATUS_UPDATED',
     EXTENTION_INITIALIZED = 'EXTENTION_INITIALIZED',
     TOGGLE_BANNER = 'TOGGLE_BANNER',
+    ABORT_CHECK_LEGITIMATE_BY_URL = 'ABORT_CHECK_LEGITIMATE_BY_URL',
 }
 
 export type Message = {
@@ -14,5 +15,5 @@ export type Message = {
     url?: string;
     enableBanner?: boolean;
     phishingStatus?: PhishingStatus;
-    domFeatures?: DOMFeatures;
+    domFeatures?: number[];
 }

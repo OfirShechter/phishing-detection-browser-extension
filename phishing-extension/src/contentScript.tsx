@@ -4,21 +4,21 @@ import { Banner } from './components/Banner';
 import { Message, MessageType } from './types/message.types';
 import { StorageKey } from './types/storage.types';
 import { PhishingStatus } from './types/state.type';
-import { safeExtractDOMFeatures } from './phishingDetector/domFeaturesExtractor';
+import { extractDOMFeatures } from './phishingDetector/domFeaturesExtractor';
+import { useDocumentBodyReady } from './hooks/useDocumentBodyReady';
 
 // import { isModelReady } from './phishingDetector/initializeModel';
 
 let phishingStatus: PhishingStatus = PhishingStatus.PROCESSING; // Store phishing state in memory
 let bannerState = false; // Store banner enabled state in memory
 
-function updatePhishingStatus(setPhishingStateCallback: React.Dispatch<React.SetStateAction<PhishingStatus>>) {
-    console.log('Checking phishing status for URL:', window.location.href);
+function checkPhishingByDom(setPhishingStateCallback: React.Dispatch<React.SetStateAction<PhishingStatus>>) {
+    console.log('Checking phishing status by DOM for URL:', window.location.href);
 
     chrome.runtime.sendMessage(
         {
-            type: MessageType.CHECK_PHISHING,
-            url: window.location.href,
-            domFeatures: safeExtractDOMFeatures()
+            type: MessageType.CHECK_PHISHING_BY_DOM,
+            domFeatures: extractDOMFeatures(),
         },
         (response) => {
             console.log('got response from background script', response)
@@ -27,6 +27,24 @@ function updatePhishingStatus(setPhishingStateCallback: React.Dispatch<React.Set
         }
     );
 }
+
+function checkLegitimateByUrl(setPhishingStateCallback: React.Dispatch<React.SetStateAction<PhishingStatus>>) {
+    console.log('Checking legitimate by url status for URL:', window.location.href);
+
+    chrome.runtime.sendMessage(
+        {
+            type: MessageType.CHECK_LEGITIMATE_BY_URL,
+            url: window.location.href,
+        },
+        (response) => {
+            console.log('got response from background script', response)
+            phishingStatus = response.phishingStatus
+            setPhishingStateCallback(phishingStatus);
+        }
+    );
+}
+
+
 
 const mountApp = () => {
     const mount = document.createElement('div');
@@ -39,6 +57,8 @@ const mountApp = () => {
         const [phishingState, setPhishingState] = useState<PhishingStatus>(PhishingStatus.PROCESSING);
         const [isBannerEnabled, setIsBannerEnabled] = useState<boolean>(false);
         const [returnedElement, setReturnedElement] = useState<React.ReactElement>(<></>);
+        const isBodyReady = useDocumentBodyReady();
+
 
         useEffect(() => {
             // chrome.storage.local.get("isInitialized", (result) => {
@@ -46,7 +66,9 @@ const mountApp = () => {
             //         updatePhishingStatus(setPhishingState);
             //     };
             // });
-            updatePhishingStatus(setPhishingState)
+            if (!isBodyReady) {
+                checkLegitimateByUrl(setPhishingState)
+            }
             // if (isModelReady()) {
             //     updatePhishingStatus(setPhishingState);
             // }
@@ -70,6 +92,20 @@ const mountApp = () => {
                 }
             });
         }, []);
+
+        useEffect(() => {
+            if (isBodyReady) {
+                chrome.runtime.sendMessage(
+                    {
+                        type: MessageType.ABORT_CHECK_LEGITIMATE_BY_URL,
+                    },
+                    (response) => {
+                        console.log('got response from background script', response)
+                    }
+                );
+                checkPhishingByDom(setPhishingState);
+            }
+        }, [isBodyReady])
 
         useEffect(() => {
             console.log('isPhishing', phishingState)

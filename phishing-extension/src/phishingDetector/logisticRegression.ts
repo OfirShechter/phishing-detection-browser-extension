@@ -22,7 +22,7 @@ export class LogisticRegressionClassifier {
     const z = dot + this.intercept;
     const proba = this.sigmoid(z);
 
-    return proba >= this.phishingThreshold; // Return true if phishing, false otherwise
+    return proba < this.phishingThreshold; // Return true if Legitimate, false otherwise
   }
 }
 
