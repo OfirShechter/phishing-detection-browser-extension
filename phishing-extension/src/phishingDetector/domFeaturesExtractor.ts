@@ -89,7 +89,7 @@ function extractDOMFeaturesObject(): DOMFeatures {
       forms: document.querySelectorAll("form").length,
       inputs: document.querySelectorAll("input").length,
       iframes: document.querySelectorAll("iframe").length,
-      scripts: document.querySelectorAll("script[src]").length,
+      scripts: document.querySelectorAll("script").length,
       images: document.querySelectorAll("img").length,
       buttons: document.querySelectorAll("button").length,
       domDepth: getDOMDepth(),
@@ -127,5 +127,6 @@ function extractDOMFeaturesObject(): DOMFeatures {
   
 export function extractDOMFeatures(): number[] {
   const features = extractDOMFeaturesObject();
+  console.log("got DOM features:", features)
   return domFeaturesObjectToArray(features);
 }
