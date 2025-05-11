@@ -5,17 +5,25 @@ import { Message, MessageType } from './types/message.types';
 import { StorageKey } from './types/storage.types';
 import { PhishingStatus } from './types/state.type';
 import { extractDOMFeatures } from './phishingDetector/domFeaturesExtractor';
+import { extractUrlFeatures } from './phishingDetector/urlFeaturesExtractor';
 
 let phishingStatus: PhishingStatus = PhishingStatus.PROCESSING;
 let bannerState = false;
 
-function checkPhishing(setPhishingStateCallback: React.Dispatch<React.SetStateAction<PhishingStatus>>) {
+function checkPhishing(urlFeatures: number[], setPhishingStateCallback: React.Dispatch<React.SetStateAction<PhishingStatus>>) {
     console.log('Checking phishing status (URL + DOM):', window.location.href);
+    if (detectBrowserBlocking()) {
+        console.warn('Browser may be blocking the site. Forcing phishingState = TRUE');
+        phishingStatus = PhishingStatus.PHISHING;
+        setPhishingStateCallback(phishingStatus);
+        return;
+    }
+
     chrome.runtime.sendMessage(
         {
             type: MessageType.CHECK_PHISHING,
             domFeatures: extractDOMFeatures(),
-            url: window.location.href,
+            urlFeatures: urlFeatures,
         },
         (response) => {
             console.log('Got phishing check response:', response);
@@ -24,6 +32,20 @@ function checkPhishing(setPhishingStateCallback: React.Dispatch<React.SetStateAc
         }
     );
 }
+
+const detectBrowserBlocking = () => {
+    const isEmptyBody = !document.body || document.body.innerText.trim().length === 0;
+    const isErrorTitle = document.title.toLowerCase().includes('privacy error') ||
+                         document.title.toLowerCase().includes('your connection is not private') ||
+                         document.title.toLowerCase().includes('not secure');
+                         document.title.toLowerCase().includes('dangerous site');
+
+    if (isEmptyBody || isErrorTitle) {
+        return true;
+    }
+    return false;
+};
+
 
 const mountApp = () => {
     const mount = document.createElement('div');
@@ -62,26 +84,17 @@ const mountApp = () => {
             });
 
             // Check legitimacy first, before DOM is ready
-            chrome.runtime.sendMessage(
-                {
-                    type: MessageType.CHECK_LEGITIMATE_BY_URL,
-                    url: window.location.href,
-                },
-                (response) => {
-                    phishingStatus = response.phishingStatus;
-                    setPhishingState(response.phishingStatus);
-                }
-            );
+            const urlFeatures = extractUrlFeatures(window.location.href);
 
             const tryRunPhishingCheckWhenReady = () => {
                 if (document.readyState === 'complete') {
                     // Abort earlier URL-only check if needed
                     chrome.runtime.sendMessage({ type: MessageType.ABORT_CHECK_LEGITIMATE_BY_URL }, () => {});
-                    checkPhishing(setPhishingState);
+                    checkPhishing(urlFeatures, setPhishingState);
                 } else {
                     window.addEventListener('load', () => {
                         chrome.runtime.sendMessage({ type: MessageType.ABORT_CHECK_LEGITIMATE_BY_URL }, () => {});
-                        checkPhishing(setPhishingState);
+                        checkPhishing(urlFeatures, setPhishingState);
                     });
                 }
             };

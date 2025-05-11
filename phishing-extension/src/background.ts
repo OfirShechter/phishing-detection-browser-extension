@@ -1,8 +1,6 @@
 // import { initialize } from "./phishingDetector/initializeModel";
 import {
   isPhishingSite,
-  isPhishingSiteByDom,
-  isSiteLegitimateByUrl,
 } from "./phishingDetector/phishingDetector";
 import { Message, MessageType } from "./types/message.types";
 import { PhishingStatus } from "./types/state.type";
@@ -54,57 +52,13 @@ chrome.runtime.onMessage.addListener(
         }
         sendResponse({ success: true });
         break;
-      case MessageType.CHECK_LEGITIMATE_BY_URL:
-        if (!message.url) {
-          console.error("URL is required to check for phishing.");
-          sendResponse({ PhishingStatus: PhishingStatus.ERROR });
-          return;
-        }
-        // Abort previous one if still active
-        if (currentLegitimacyCheckController) {
-          currentLegitimacyCheckController.abort();
-        }
-
-        currentLegitimacyCheckController = new AbortController();
-
-        const isLegitimate = isSiteLegitimateByUrl(
-          message.url,
-          currentLegitimacyCheckController.signal
-        );
-        const legitimacyStatus = isLegitimate
-          ? PhishingStatus.LEGITIMATE
-          : PhishingStatus.PROCESSING; // if not true more processing is needed
-        notifyContentScriptAndPopup({
-          type: MessageType.PHISHING_STATUS_UPDATED,
-          phishingStatus: legitimacyStatus,
-        });
-        console.log("Legitimacy status updated:", isLegitimate);
-        sendResponse({ phishingStatus: legitimacyStatus });
-        break;
-      case MessageType.CHECK_PHISHING_BY_DOM:
-        if (!message.domFeatures) {
-          console.error("DOM is required to check for phishing.");
-          sendResponse({ PhishingStatus: PhishingStatus.ERROR });
-          return;
-        }
-        const isPhishing = isPhishingSiteByDom(message.domFeatures);
-        const phishingStatus = isPhishing
-          ? PhishingStatus.PHISHING
-          : PhishingStatus.LEGITIMATE;
-        notifyContentScriptAndPopup({
-          type: MessageType.PHISHING_STATUS_UPDATED,
-          phishingStatus,
-        });
-        console.log("Phishing status updated:", isPhishing);
-        sendResponse({ phishingStatus });
-        break;
       case MessageType.CHECK_PHISHING:
-          if (!message.domFeatures || !message.url) {
+          if (!message.domFeatures || !message.urlFeatures) {
             console.error("URL and DOM are required to check for phishing.");
             sendResponse({ PhishingStatus: PhishingStatus.ERROR });
             return;
           }
-          const isPhis = isPhishingSite(message.url, message.domFeatures);
+          const isPhis = isPhishingSite(message.urlFeatures, message.domFeatures);
           const phishStatus = isPhis
             ? PhishingStatus.PHISHING
             : PhishingStatus.LEGITIMATE;
