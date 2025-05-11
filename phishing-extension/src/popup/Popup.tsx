@@ -3,7 +3,8 @@ import { MessageType } from '../types/message.types';
 import { StorageKey } from '../types/storage.types';
 import { PhishingStatus } from '../types/state.type';
 import { phishingStatusText } from '../components/Banner';
-import { safeExtractDOMFeatures } from "../phishingDetector/domFeaturesExtractor.ts";
+import { extractDOMFeatures } from "../phishingDetector/domFeaturesExtractor.ts";
+import { extractUrlFeatures } from '../phishingDetector/urlFeaturesExtractor.ts';
 
 function setPhishingStatusFromActiveTab(setPhishingCallback: React.Dispatch<React.SetStateAction<PhishingStatus>>
 ) {
@@ -21,9 +22,9 @@ function setPhishingStatusFromActiveTab(setPhishingCallback: React.Dispatch<Reac
                         const url = tabs[0]?.url;
                         if (url) {
                             console.log('Checking phishing status for tab URL:', url);
-
+                            const html = document.documentElement.outerHTML;
                             chrome.runtime.sendMessage(
-                                { type: MessageType.CHECK_PHISHING_BY_DOM, domFeatures: safeExtractDOMFeatures() },
+                                { type: MessageType.CHECK_PHISHING, domFeatures: extractDOMFeatures(html), urlFeatures: extractUrlFeatures(url) },
                                 (response) => {
                                     setPhishingCallback(response.phishingStatus);
                                 }

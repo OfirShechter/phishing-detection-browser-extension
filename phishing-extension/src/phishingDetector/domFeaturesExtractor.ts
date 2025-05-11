@@ -15,18 +15,9 @@ export interface DOMFeatures {
   hasEval: boolean;
 }
 
-export function safeExtractDOMFeatures(): number[] | null {
-  try {
-    return extractDOMFeatures();
-  } catch (err) {
-    console.error("DOM feature extraction failed", err);
-    return null;
-  }
-}
-
-const getExternalResourceRatio = () => {
+const getExternalResourceRatio = (doc: Document) => {
   const resources = Array.from(
-    document.querySelectorAll("script[src], img[src], link[href]")
+    doc.querySelectorAll("script[src], img[src], link[href]")
   );
   const externalCount = resources.filter((res) => {
     const src = res.getAttribute("src") || res.getAttribute("href");
@@ -36,7 +27,7 @@ const getExternalResourceRatio = () => {
   return resources.length === 0 ? 0 : externalCount / resources.length;
 };
 
-const getPhishingKeywordsCount = () => {
+const getPhishingKeywordsCount = (doc: Document) => {
   const keywords = [
     "verify",
     "account",
@@ -46,7 +37,7 @@ const getPhishingKeywordsCount = () => {
     "update",
     "confirm",
   ];
-  const bodyText = document.body?.innerText?.toLowerCase() || "";
+  const bodyText = doc.body?.innerText?.toLowerCase() || "";
   return keywords.reduce(
     (count, word) => count + (bodyText.includes(word) ? 1 : 0),
     0
@@ -84,22 +75,24 @@ const getMaxChildrenCount = (root: Element = document.body): number => {
   return maxChildren;
 };
 
-function extractDOMFeaturesObject(): DOMFeatures {
+function extractDOMFeaturesObject(html: string): DOMFeatures {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, "text/html");
     return {
-      forms: document.querySelectorAll("form").length,
-      inputs: document.querySelectorAll("input").length,
-      iframes: document.querySelectorAll("iframe").length,
-      scripts: document.querySelectorAll("script").length,
-      images: document.querySelectorAll("img").length,
-      buttons: document.querySelectorAll("button").length,
-      domDepth: getDOMDepth(),
-      maxChildren: getMaxChildrenCount(),
-      titleLength: document.title.length,
-      onmouseoverEvents: document.querySelectorAll("[onmouseover]").length,
-      externalResourceRatio: getExternalResourceRatio(),
-      inlineStyles: document.querySelectorAll("[style]").length,
-      phishingKeywordHits: getPhishingKeywordsCount(),
-      hasEval: Array.from(document.querySelectorAll("script")).some((s) =>
+      forms: doc.querySelectorAll("form").length,
+      inputs: doc.querySelectorAll("input").length,
+      iframes: doc.querySelectorAll("iframe").length,
+      scripts: doc.querySelectorAll("script").length,
+      images: doc.querySelectorAll("img").length,
+      buttons: doc.querySelectorAll("button").length,
+      domDepth: getDOMDepth(doc.body),
+      maxChildren: getMaxChildrenCount(doc.body),
+      titleLength: doc.title.length,
+      onmouseoverEvents: doc.querySelectorAll("[onmouseover]").length,
+      externalResourceRatio: getExternalResourceRatio(doc),
+      inlineStyles: doc.querySelectorAll("[style]").length,
+      phishingKeywordHits: getPhishingKeywordsCount(doc),
+      hasEval: Array.from(doc.querySelectorAll("script")).some((s) =>
         s.innerText.includes("eval")
       ),
     };
@@ -125,8 +118,8 @@ function extractDOMFeaturesObject(): DOMFeatures {
   }
 
   
-export function extractDOMFeatures(): number[] {
-  const features = extractDOMFeaturesObject();
+export function extractDOMFeatures(html: string): number[] {
+  const features = extractDOMFeaturesObject(html);
   console.log("got DOM features:", features)
   return domFeaturesObjectToArray(features);
 }
