@@ -11,14 +11,6 @@ let phishingStatus: PhishingStatus = PhishingStatus.PROCESSING;
 let bannerState = false;
 
 function checkPhishing(urlFeatures: number[], setPhishingStateCallback: React.Dispatch<React.SetStateAction<PhishingStatus>>) {
-    console.log('Checking phishing status (URL + DOM):', window.location.href);
-    if (detectBrowserBlocking()) {
-        console.warn('Browser may be blocking the site. Forcing phishingState = TRUE');
-        phishingStatus = PhishingStatus.PHISHING;
-        setPhishingStateCallback(phishingStatus);
-        return;
-    }
-
     chrome.runtime.sendMessage(
         {
             type: MessageType.CHECK_PHISHING,
@@ -32,19 +24,6 @@ function checkPhishing(urlFeatures: number[], setPhishingStateCallback: React.Di
         }
     );
 }
-
-const detectBrowserBlocking = () => {
-    const isEmptyBody = !document.body || document.body.innerText.trim().length === 0;
-    const isErrorTitle = document.title.toLowerCase().includes('privacy error') ||
-                         document.title.toLowerCase().includes('your connection is not private') ||
-                         document.title.toLowerCase().includes('not secure');
-                         document.title.toLowerCase().includes('dangerous site');
-
-    if (isEmptyBody || isErrorTitle) {
-        return true;
-    }
-    return false;
-};
 
 
 const mountApp = () => {
