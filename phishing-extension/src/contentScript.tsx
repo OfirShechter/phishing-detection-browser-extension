@@ -16,7 +16,7 @@ function checkPhishing(urlFeatures: number[], setPhishingStateCallback: React.Di
     chrome.runtime.sendMessage(
         {
             type: MessageType.CHECK_PHISHING,
-            domFeatures: extractDOMFeatures(html),
+            domFeatures: extractDOMFeatures(html, window.location.hostname),
             urlFeatures: urlFeatures,
         },
         (response) => {

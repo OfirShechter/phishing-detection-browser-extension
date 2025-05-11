@@ -24,7 +24,7 @@ function setPhishingStatusFromActiveTab(setPhishingCallback: React.Dispatch<Reac
                             console.log('Checking phishing status for tab URL:', url);
                             const html = document.documentElement.outerHTML;
                             chrome.runtime.sendMessage(
-                                { type: MessageType.CHECK_PHISHING, domFeatures: extractDOMFeatures(html), urlFeatures: extractUrlFeatures(url) },
+                                { type: MessageType.CHECK_PHISHING, domFeatures: extractDOMFeatures(html, window.location.hostname), urlFeatures: extractUrlFeatures(url) },
                                 (response) => {
                                     setPhishingCallback(response.phishingStatus);
                                 }
