@@ -11,10 +11,12 @@ let phishingStatus: PhishingStatus = PhishingStatus.PROCESSING;
 let bannerState = false;
 
 function checkPhishing(urlFeatures: number[], setPhishingStateCallback: React.Dispatch<React.SetStateAction<PhishingStatus>>) {
+    const html = document.documentElement.outerHTML;
+
     chrome.runtime.sendMessage(
         {
             type: MessageType.CHECK_PHISHING,
-            domFeatures: extractDOMFeatures(),
+            domFeatures: extractDOMFeatures(html),
             urlFeatures: urlFeatures,
         },
         (response) => {
