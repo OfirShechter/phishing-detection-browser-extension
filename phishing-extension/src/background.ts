@@ -60,6 +60,22 @@ chrome.runtime.onMessage.addListener(
           console.log("Phishing status updated:", isPhis);
           sendResponse({ phishingStatus: phishStatus });
           break;
+        case MessageType.FETCH_HTML:
+            if (!message.url) {
+                console.error("No URL provided for FETCH_HTML");
+                sendResponse({ html: null, error: "Missing URL" });
+                return;
+            }
+            fetch(message.url)
+                .then((res) => res.text())
+                .then((html) => {
+                    sendResponse({ html });
+                })
+                .catch((err) => {
+                    console.error("Failed to fetch HTML:", err);
+                    sendResponse({ html: null, error: err.toString() });
+                });
+            break;
       default:
         console.error("Unknown message type:", message.type);
         break;

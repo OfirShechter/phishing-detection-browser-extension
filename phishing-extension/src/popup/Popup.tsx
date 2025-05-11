@@ -22,11 +22,24 @@ function setPhishingStatusFromActiveTab(setPhishingCallback: React.Dispatch<Reac
                         const url = tabs[0]?.url;
                         if (url) {
                             console.log('Checking phishing status for tab URL:', url);
-                            const html = document.documentElement.outerHTML;
                             chrome.runtime.sendMessage(
-                                { type: MessageType.CHECK_PHISHING, domFeatures: extractDOMFeatures(html, window.location.hostname), urlFeatures: extractUrlFeatures(url) },
+                                { type: MessageType.FETCH_HTML, url: window.location.href },
                                 (response) => {
-                                    setPhishingCallback(response.phishingStatus);
+                                    if (!response?.html) {
+                                        console.error('Failed to fetch HTML for phishing check:', response?.error);
+                                        setPhishingCallback(PhishingStatus.ERROR);
+                                        return;
+                                    }
+                                    chrome.runtime.sendMessage(
+                                        {
+                                            type: MessageType.CHECK_PHISHING,
+                                            domFeatures: extractDOMFeatures(response.html, window.location.hostname),
+                                            urlFeatures: extractUrlFeatures(url)
+                                        },
+                                        (response) => {
+                                            setPhishingCallback(response.phishingStatus);
+                                        }
+                                    );
                                 }
                             );
                         }

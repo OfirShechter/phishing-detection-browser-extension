@@ -11,21 +11,33 @@ let phishingStatus: PhishingStatus = PhishingStatus.PROCESSING;
 let bannerState = false;
 
 function checkPhishing(urlFeatures: number[], setPhishingStateCallback: React.Dispatch<React.SetStateAction<PhishingStatus>>) {
-    const html = document.documentElement.outerHTML;
-
     chrome.runtime.sendMessage(
-        {
-            type: MessageType.CHECK_PHISHING,
-            domFeatures: extractDOMFeatures(html, window.location.hostname),
-            urlFeatures: urlFeatures,
-        },
+        { type: MessageType.FETCH_HTML, url: window.location.href },
         (response) => {
-            console.log('Got phishing check response:', response);
-            phishingStatus = response.phishingStatus;
-            setPhishingStateCallback(phishingStatus);
+            if (!response?.html) {
+                console.error('Failed to fetch HTML for phishing check:', response?.error);
+                setPhishingStateCallback(PhishingStatus.ERROR);
+                return;
+            }
+
+            const domFeatures = extractDOMFeatures(response.html, window.location.hostname);
+
+            chrome.runtime.sendMessage(
+                {
+                    type: MessageType.CHECK_PHISHING,
+                    domFeatures,
+                    urlFeatures,
+                },
+                (response) => {
+                    console.log('Got phishing check response:', response);
+                    phishingStatus = response.phishingStatus;
+                    setPhishingStateCallback(phishingStatus);
+                }
+            );
         }
     );
 }
+
 
 
 const mountApp = () => {
@@ -66,18 +78,7 @@ const mountApp = () => {
 
             // Check legitimacy first, before DOM is ready
             const urlFeatures = extractUrlFeatures(window.location.href);
-
-            const tryRunPhishingCheckWhenReady = () => {
-                if (document.readyState === 'complete') {
-                    checkPhishing(urlFeatures, setPhishingState);
-                } else {
-                    window.addEventListener('load', () => {
-                        checkPhishing(urlFeatures, setPhishingState);
-                    });
-                }
-            };
-
-            tryRunPhishingCheckWhenReady();
+            checkPhishing(urlFeatures, setPhishingState);
 
             return () => chrome.runtime.onMessage.removeListener(handleRuntimeMessages);
         }, []);
