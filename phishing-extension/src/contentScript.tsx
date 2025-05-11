@@ -88,12 +88,9 @@ const mountApp = () => {
 
             const tryRunPhishingCheckWhenReady = () => {
                 if (document.readyState === 'complete') {
-                    // Abort earlier URL-only check if needed
-                    chrome.runtime.sendMessage({ type: MessageType.ABORT_CHECK_LEGITIMATE_BY_URL }, () => {});
                     checkPhishing(urlFeatures, setPhishingState);
                 } else {
                     window.addEventListener('load', () => {
-                        chrome.runtime.sendMessage({ type: MessageType.ABORT_CHECK_LEGITIMATE_BY_URL }, () => {});
                         checkPhishing(urlFeatures, setPhishingState);
                     });
                 }

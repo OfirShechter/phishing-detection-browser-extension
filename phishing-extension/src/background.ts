@@ -19,19 +19,6 @@ function notifyContentScriptAndPopup(message: Message) {
   chrome.runtime.sendMessage(message);
 }
 
-let currentLegitimacyCheckController: AbortController | null = null;
-
-// chrome.runtime.onInstalled.addListener(async () => {
-//   await initialize();
-//   chrome.storage.local.set({ isInitialized: true });
-//   notifyContentScriptAndPopup({type: MessageType.EXTENTION_INITIALIZED});
-// });
-
-// (async function init() {
-//   await initialize();
-//   chrome.storage.local.set({ isInitialized: true });
-//   notifyContentScriptAndPopup({type: MessageType.EXTENTION_INITIALIZED});
-// })();
 
 chrome.runtime.onMessage.addListener(
   (message: Message, _sender, sendResponse) => {
@@ -44,13 +31,6 @@ chrome.runtime.onMessage.addListener(
           type: MessageType.TOGGLE_BANNER,
           enableBanner: message.enableBanner,
         });
-        break;
-      case MessageType.ABORT_CHECK_LEGITIMATE_BY_URL:
-        if (currentLegitimacyCheckController) {
-          currentLegitimacyCheckController.abort();
-          currentLegitimacyCheckController = null;
-        }
-        sendResponse({ success: true });
         break;
       case MessageType.CHECK_PHISHING:
           if (!message.domFeatures || !message.urlFeatures) {
