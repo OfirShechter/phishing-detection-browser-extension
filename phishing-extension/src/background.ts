@@ -33,6 +33,17 @@ chrome.runtime.onMessage.addListener(
         });
         break;
       case MessageType.CHECK_PHISHING:
+          chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+            if (tabs[0]?.title?.toLowerCase() == "security error") {
+              console.log("Security error page detected, skipping phishing check.");
+              notifyContentScriptAndPopup({
+                type: MessageType.PHISHING_STATUS_UPDATED,
+                phishingStatus: PhishingStatus.PHISHING,
+              });    
+              sendResponse({ phishingStatus: PhishingStatus.PHISHING });
+              return;
+            }
+          });
           if (!message.domFeatures || !message.urlFeatures) {
             console.error("URL and DOM are required to check for phishing.");
             sendResponse({ PhishingStatus: PhishingStatus.ERROR });
