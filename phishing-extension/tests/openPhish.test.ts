@@ -2,18 +2,30 @@ import { isPhishingSite } from "../src/phishingDetector/phishingDetector";
 import { extractDOMFeatures } from "../src/phishingDetector/domFeaturesExtractor";
 import { extractUrlFeatures } from "../src/phishingDetector/urlFeaturesExtractor";
 
-const urls = [
-  "https://example.com", // Replace with your list of URLs
-  "https://phishing-site.com",
-  "https://legitimate-site.com",
-];
+async function fetchUrlsFromOpenPhish() {
+  try {
+    const response = await fetch("https://openphish.com/feed.txt");
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const text = await response.text();
+    const urls = text.split("\n").filter((url) => url.trim() !== "");
+    return urls
+  } catch (error) {
+    console.error("Failed to fetch URLs from OpenPhish:", error);
+    return [];
+  }
+}
+
 
 async function checkPhishingUrls() {
   let phishingCount = 0;
 
+  const urls = (await fetchUrlsFromOpenPhish()).splice(0, 2); // Limit to 10 URLs for testing
+
   for (const url of urls) {
+    console.log(`Checking URL: ${url}`);
     try {
-      console.log(`Checking URL: ${url}`);
       const response = await fetch(url);
       const html = await response.text();
 

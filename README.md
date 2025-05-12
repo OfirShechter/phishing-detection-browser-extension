@@ -37,3 +37,7 @@ A Chrome Extension built with **TypeScript** and **Vite**, designed to help dete
 3. Click Load unpacked and select the dist/ folder.
 
 4. The extension should now be installed and active.
+
+### Test extension
+1. pnpm --filter=phishing-extension exec playwright install chromium (once in new env)
+2. pnpm --filter=phishing-extension run test:extension

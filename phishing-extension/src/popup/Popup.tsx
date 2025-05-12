@@ -86,7 +86,7 @@ const Popup = () => {
 
     return <div style={{ width: 300, padding: 20 }}>
         <h2>🔍 Phishing Status</h2>
-        <h2>{text}</h2>
+        <h2 id="phishing-status">{text}</h2>
         <h3>🔧 Banner Settings</h3>
         <button onClick={toggleBanner} style={{ padding: '10px 20px', cursor: 'pointer' }}>
             {isBannerEnabled ? 'Disable Banner' : 'Enable Banner'}
