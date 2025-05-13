@@ -22,4 +22,5 @@ dist-tests
 *.ntvs*
 *.njsproj
 *.sln
+playwright-profile
 *.sw?

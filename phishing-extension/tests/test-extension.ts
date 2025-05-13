@@ -3,7 +3,7 @@ import fs from 'fs/promises';
 import { PhishingStatus } from '../src/types/state.type';
 import { ConfusionMatrix } from 'ml-confusion-matrix';
 import {writeFileSync} from "node:fs";
-import { plot } from 'nodeplotlib';
+import { plot, PlotData } from 'nodeplotlib';
 import * as fsSync from 'fs';
 import { parse } from 'csv-parse/sync';
 
@@ -16,8 +16,8 @@ const phishingStatusText: Record<PhishingStatus, string> = {
 };
 
 
-const EXTENSION_PATH: string = "dist";
-const csvFilePath = 'openphish_dom_features_copy.csv';
+const EXTENSION_PATH: string = "C:/Users/ofir1/Msc/phishing-detection-browser-extension/phishing-extension/dist";
+const csvFilePath = "Data/openphish_enriched.csv";
 const csvContent = fsSync.readFileSync(csvFilePath, 'utf-8');
 const records = parse(csvContent, {
   columns: true,
@@ -46,7 +46,7 @@ const records = parse(csvContent, {
   await new Promise((r) => setTimeout(r, 3000));
 
   // Wait for the extension to load
-  console.log('Browser launched. Waiting for manual configuration...');
+  // console.log('Browser launched. Waiting for manual configuration...');
   // await page.pause(); // Opens Playwright Inspector and pauses execution
   
   // get extention id
@@ -55,20 +55,24 @@ const records = parse(csvContent, {
     background = await context.waitForEvent('serviceworker');
 
   const extensionId = background.url().split('/')[2];
-
+  console.log('Extension ID:', extensionId);
   // const urls = [
   //   { url: 'https://google.com', type: 'legitimate' },
   //   { url: 'https://www.bbc.com/', type: 'legitimate' },
   //   { url: 'https://sso--ndax-io---view-app---cdn.webflow.io/', type: 'phishing' },
   // ];
-  const urls = records.map((r: any) => ({ url: r.url, type: r.type }));
+  const urls = records.map((r: any) => ({ url: r.url, type: r.type })).slice(0, 300);
 
 
   let phishingCount = 0;
   let legitimateCount = 0;
   const trueLabels: string[] = [];
   const predictedLabels: string[] = [];
-  const timesTaken: number[] = [];
+  const timesTaken: number[] = []; 
+
+  // Open popup manually via chrome-extension://
+  const popupPage = await context.newPage();
+  await popupPage.goto(`chrome-extension://${extensionId}/popup.html`, { waitUntil: 'domcontentloaded' });
 
   for (const { url, type } of urls) {
     let result: string | null = '';
@@ -76,11 +80,11 @@ const records = parse(csvContent, {
     let predictedLabel = 'unknown';
     console.log(`Testing: ${url} [expected: ${type}]`);
     try {
-      await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 15000 });
+      await page.goto('about:blank', { waitUntil: 'load', timeout: 15000 });
+      // Wait a moment to reset the page
+      await new Promise((r) => setTimeout(r, 10));
 
-      // Open popup manually via chrome-extension://
-      const popupPage = await context.newPage();
-      await popupPage.goto(`chrome-extension://${extensionId}/popup.html`);
+      await page.goto(url, { waitUntil: 'load', timeout: 15000 });
 
       // Wait for extension logic to finish
       const startTime = Date.now(); // Start timing
@@ -122,16 +126,18 @@ const records = parse(csvContent, {
       else if (result === phishingStatusText[PhishingStatus.LEGITIMATE]) {
         legitimateCount++;
       }
-      // await popupPage.pause();
-      await popupPage.close();
     } catch (error) {
       console.error(`Error processing ${url}:`, error.message);
       // predictedLabel will remain "unknown"
     }
+
     trueLabels.push(type);
     timesTaken.push(timeTaken);
     predictedLabels.push(predictedLabel);
   }
+  // await popupPage.pause();
+  await popupPage.close();
+
   const filteredIndices = predictedLabels.map((label, idx) => label !== 'unknown' ? idx : -1).filter(idx => idx !== -1);
   const filteredTrue = filteredIndices.map(idx => trueLabels[idx]);
   const filteredPred = filteredIndices.map(idx => predictedLabels[idx]);
@@ -157,7 +163,7 @@ const records = parse(csvContent, {
     timeTakenMs: timesTaken[idx],
   }));
 
-  writeFileSync('results.json', JSON.stringify({
+  writeFileSync('Data/results.json', JSON.stringify({
     confusionMatrix: confusionMatrix.getMatrix(),
     accuracy: confusionMatrix.getAccuracy(),
     timeStats,
@@ -183,12 +189,12 @@ const records = parse(csvContent, {
     z: raw,
     x: ['legitimate', 'phishing'], // Predicted
     y: ['legitimate', 'phishing'], // Actual
-    type: 'heatmap',
+    type: 'heatmap' as const,
     colorscale: 'Blues',
     showscale: true,
     hoverongaps: false,
-    text: raw.map(row => row.map(val => val.toLocaleString())),
-    hoverinfo: 'text',
+    text: raw.flat().map(val => val.toLocaleString()),
+    hoverinfo: 'text' as const,
   };
 
   const layout = {
