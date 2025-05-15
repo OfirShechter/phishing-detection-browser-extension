@@ -3,6 +3,7 @@ import { TokensToNumber } from "./tokensToNumber";
 import domainModelData from "../model/domain_model.json";
 import tldModelData from "../model/tld_model.json";
 import subdomainsModelData from "../model/subdomains_model.json";
+import { parse } from 'tldts';
 
 
 interface UrlFeatures {
@@ -12,7 +13,9 @@ interface UrlFeatures {
   domain: string;
   tld: string;
   port: boolean;
+  suspiciousChars: number;
   hasDoubleSlash: boolean;
+  hyphenCount: number;
   numbersInSubdomains: number;
   numOfSubdomains: number;
 }
@@ -29,22 +32,44 @@ interface UrlFeatures {
 function extractUrlFeaturesObject(url: string): UrlFeatures {
   try {
     const parsed = new URL(url);
-    const hostnameParts = parsed.hostname.split(".");
-    const domain = hostnameParts.slice(-2, -1)[0] || "";
-    const tld = hostnameParts.slice(-1)[0] || "";
-    const subdomains = hostnameParts.slice(0, -2);
+    const extracted = parse(url);
+
+    const subdomain = extracted.subdomain || '';
+    const domain = extracted.domain || '';
+    const tld = extracted.publicSuffix || '';
+    const subdomains = subdomain ? subdomain.split('.') : [];
+
+    // Authority construction: [username[:password]@]hostname[:port]
+    let authority = '';
+    if (parsed.username) authority += parsed.username;
+    if (parsed.password) authority += ':' + parsed.password;
+    if (parsed.username || parsed.password) authority += '@';
+    if (parsed.hostname) authority += parsed.hostname;
+    if (parsed.port) authority += ':' + parsed.port;
+
+    const suspiciousChars = new Set("@~!*'();&=%#\\|^<>[]{}`");
+
+    const suspiciousCharsCount = [...authority].filter(char => suspiciousChars.has(char)).length;
+
+    const hasDoubleSlash = url.slice(8).includes('//'); // skip scheme (http:// or https://)
+
+    const hyphenCount = parsed.hostname ? (parsed.hostname.match(/-/g) || []).length : 0;
+
+    const numbersInSubdomains = subdomains.reduce((acc, sub) => {
+      return acc + (sub.match(/\d/g) || []).length;
+    }, 0);
 
     return {
-      protocol: parsed.protocol.replace(":", "") == "https",
-      hasAuth: parsed.username !== "" || parsed.password !== "",
-      subdomains,
-      domain,
-      tld,
-      port: parsed.port ? true : false,
-      hasDoubleSlash: url.includes("//", 8),
-      numbersInSubdomains: subdomains.reduce((count, part) => {
-        return count + (part.match(/\d/g)?.length || 0); // Match digits and count them
-      }, 0),
+      protocol: parsed.protocol === 'https:',
+      hasAuth: !!parsed.username || !!parsed.password,
+      subdomains: subdomains,
+      domain: domain,
+      tld: tld,
+      port: !!parsed.port,
+      suspiciousChars: suspiciousCharsCount,
+      hasDoubleSlash: hasDoubleSlash,
+      hyphenCount: hyphenCount,
+      numbersInSubdomains: numbersInSubdomains,
       numOfSubdomains: subdomains.length,
     };
   } catch (e) {
@@ -74,7 +99,9 @@ function feturesObjectToArray(features: UrlFeatures): number[] {
     stringToNumber(features.domain, domainTokensToNumber.forward.bind(domainTokensToNumber)), // domain emmbedded value
     stringToNumber(features.tld, tldTokensToNumber.forward.bind(tldTokensToNumber)), // tld emmbedded value
     features.port ? 1 : 0,
+    features.suspiciousChars,
     features.hasDoubleSlash ? 1 : 0,
+    features.hyphenCount,
     features.numbersInSubdomains,
     features.numOfSubdomains,
   ];
@@ -82,5 +109,6 @@ function feturesObjectToArray(features: UrlFeatures): number[] {
 
 export function extractUrlFeatures(url: string): number[] {
   const features = extractUrlFeaturesObject(url);
+  console.log("extract URL features for", url)
   return feturesObjectToArray(features);
 }
