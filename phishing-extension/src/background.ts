@@ -1,7 +1,7 @@
 // import { initialize } from "./phishingDetector/initializeModel";
-// import {
-//   isPhishingSite,
-// } from "./phishingDetector/phishingDetector";
+import {
+  isPhishingSite,
+} from "./phishingDetector/phishingDetector";
 import { Message, MessageType } from "./types/message.types";
 import { PhishingStatus } from "./types/state.type";
 import { StorageKey } from "./types/storage.types";
@@ -50,7 +50,10 @@ chrome.runtime.onMessage.addListener(
             return;
           }
           console.log("Checking phishing status for URL: ", message.url);
-          sendResponse({phishingStatus: PhishingStatus.ERROR});
+          const isPhis = isPhishingSite(message.urlFeatures, message.domFeatures);
+          const phishStatus = isPhis
+            ? PhishingStatus.PHISHING
+            : PhishingStatus.LEGITIMATE;
           notifyContentScriptAndPopup({
             type: MessageType.PHISHING_STATUS_UPDATED,
             phishingStatus: phishStatus,
