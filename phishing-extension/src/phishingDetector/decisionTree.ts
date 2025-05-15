@@ -53,10 +53,6 @@ export class LogregClassifier {
     ) + this.intercept;
     return this.sigmoid(z);
   }
-
-  predict(features: number[]): number {
-    return this.predictProb(features) > 0.5 ? 1 : 0;
-  }
 }
 
 export const fullDecisionTreeClassifier = new DecisionTreeClassifier(fullTree);

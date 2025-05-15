@@ -3,10 +3,11 @@ import { MessageType } from '../types/message.types';
 import { StorageKey } from '../types/storage.types';
 import { PhishingStatus } from '../types/state.type';
 import { phishingStatusText } from '../components/Banner';
-import { extractDOMFeatures } from "../phishingDetector/domFeaturesExtractor.ts";
-import { extractUrlFeatures } from '../phishingDetector/urlFeaturesExtractor.ts';
+// import { extractDOMFeatures } from "../phishingDetector/domFeaturesExtractor.ts";
+// import { extractUrlFeatures } from '../phishingDetector/urlFeaturesExtractor.ts';
 
-function setPhishingStatusFromActiveTab(setPhishingCallback: React.Dispatch<React.SetStateAction<PhishingStatus>>
+function setPhishingStatusFromActiveTab(
+    setPhishingCallback: React.Dispatch<React.SetStateAction<PhishingStatus>>
 ) {
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
         if (tabs[0]?.id) {
@@ -14,35 +15,12 @@ function setPhishingStatusFromActiveTab(setPhishingCallback: React.Dispatch<Reac
                 tabs[0].id,
                 { type: MessageType.GET_PHISHING_STATUS },
                 (response) => {
-                    console.log('got response from content script', response)
+                    console.log('got response from content script', response);
                     if (response) {
-                        setPhishingCallback(response.phishingStatus)
-                    }
-                    else {
-                        const url = tabs[0]?.url;
-                        if (url) {
-                            console.log('Checking phishing status for tab URL:', url);
-                            chrome.runtime.sendMessage(
-                                { type: MessageType.FETCH_HTML, url: window.location.href },
-                                (response) => {
-                                    if (!response?.html) {
-                                        console.error('Failed to fetch HTML for phishing check:', response?.error);
-                                        setPhishingCallback(PhishingStatus.ERROR);
-                                        return;
-                                    }
-                                    chrome.runtime.sendMessage(
-                                        {
-                                            type: MessageType.CHECK_PHISHING,
-                                            domFeatures: extractDOMFeatures(response.html, window.location.hostname),
-                                            urlFeatures: extractUrlFeatures(url)
-                                        },
-                                        (response) => {
-                                            setPhishingCallback(response.phishingStatus);
-                                        }
-                                    );
-                                }
-                            );
-                        }
+                        setPhishingCallback(response.phishingStatus);
+                    } else {
+                        console.warn('No phishing status response from content script.');
+                        setPhishingCallback(PhishingStatus.PROCESSING);
                     }
                 }
             );
@@ -65,13 +43,18 @@ const Popup = () => {
         });
 
         // Listen for updates
-        chrome.runtime.onMessage.addListener((message) => {
+        const listener = (message: any) => {
             if (message.type === MessageType.PHISHING_STATUS_UPDATED) {
-                console.log('got event PHISHING_STATUS_UPDATED at UI')
+                console.log('got event PHISHING_STATUS_UPDATED at UI');
                 setPhishingState(message.phishingStatus);
-                console.log('isPhishing', phishingState)
             }
-        });
+        };
+
+        chrome.runtime.onMessage.addListener(listener);
+
+        return () => {
+            chrome.runtime.onMessage.removeListener(listener);
+        };
     }, []);
 
     const toggleBanner = () => {

@@ -3,7 +3,7 @@ import fs from 'fs/promises';
 import { PhishingStatus } from '../src/types/state.type';
 import { ConfusionMatrix } from 'ml-confusion-matrix';
 import {writeFileSync} from "node:fs";
-import { plot, PlotData } from 'nodeplotlib';
+import { plot } from 'nodeplotlib';
 import * as fsSync from 'fs';
 import { parse } from 'csv-parse/sync';
 
@@ -16,8 +16,8 @@ const phishingStatusText: Record<PhishingStatus, string> = {
 };
 
 
-const EXTENSION_PATH: string = "C:/Users/ofir1/Msc/phishing-detection-browser-extension/phishing-extension/dist";
-const csvFilePath = "Data/openphish_enriched.csv";
+const EXTENSION_PATH: string = "dist";
+const csvFilePath = "tests/legitimate_urls.csv";
 const csvContent = fsSync.readFileSync(csvFilePath, 'utf-8');
 const records = parse(csvContent, {
   columns: true,
@@ -163,7 +163,7 @@ const records = parse(csvContent, {
     timeTakenMs: timesTaken[idx],
   }));
 
-  writeFileSync('Data/results.json', JSON.stringify({
+  writeFileSync('results.json', JSON.stringify({
     confusionMatrix: confusionMatrix.getMatrix(),
     accuracy: confusionMatrix.getAccuracy(),
     timeStats,

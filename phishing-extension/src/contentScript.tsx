@@ -11,6 +11,13 @@ let phishingStatus: PhishingStatus = PhishingStatus.PROCESSING;
 let bannerState = false;
 
 function checkPhishing(urlFeatures: number[], setPhishingStateCallback: React.Dispatch<React.SetStateAction<PhishingStatus>>) {
+    // ✅ Immediately broadcast "PROCESSING" to popup
+    phishingStatus = PhishingStatus.PROCESSING;
+    setPhishingStateCallback(phishingStatus);
+    chrome.runtime.sendMessage({
+        type: MessageType.PHISHING_STATUS_UPDATED,
+        phishingStatus: phishingStatus,
+    });
     chrome.runtime.sendMessage(
         { type: MessageType.FETCH_HTML, url: window.location.href },
         (response) => {
@@ -20,20 +27,39 @@ function checkPhishing(urlFeatures: number[], setPhishingStateCallback: React.Di
                 return;
             }
 
-            const domFeatures = extractDOMFeatures(response.html, window.location.hostname);
-
+            // First: send an immediate check with null DOM features
             chrome.runtime.sendMessage(
                 {
                     type: MessageType.CHECK_PHISHING,
-                    domFeatures,
+                    domFeatures: null,
                     urlFeatures,
+                    url: window.location.hostname,
                 },
                 (response) => {
-                    console.log('Got phishing check response:', response);
+                    console.log('Initial phishing check response (no DOM features):', response);
                     phishingStatus = response.phishingStatus;
                     setPhishingStateCallback(phishingStatus);
                 }
             );
+
+            // Then: extract features in the background and send a second check
+            setTimeout(() => {
+                const domFeatures = extractDOMFeatures(response.html, window.location.hostname);
+
+                chrome.runtime.sendMessage(
+                    {
+                        type: MessageType.CHECK_PHISHING,
+                        domFeatures,
+                        urlFeatures,
+                        url: window.location.hostname,
+                    },
+                    (response) => {
+                        console.log('Follow-up phishing check with DOM features:', response);
+                        phishingStatus = response.phishingStatus;
+                        setPhishingStateCallback(phishingStatus);
+                    }
+                );
+            }, 0); // Use timeout to delay without blocking
         }
     );
 }
