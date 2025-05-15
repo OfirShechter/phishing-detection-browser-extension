@@ -9,11 +9,14 @@ export function isPhishingSiteCombined(urlFeatures: number[], domFeatures: numbe
     return isPhishing;
 }
 
-export function isPhishingSite(urlFeatures: number[], domFeatures: number[] | null | undefined): boolean {
+export function isPhishingSite(urlFeatures: number[], domFeatures: number[] | null | undefined): number {
     const urlStart = performance.now();
     let isPhishing = logregClassifier.predictProb(urlFeatures);
     const urlDuration = performance.now() - urlStart;
     console.log(`URL Phishing check: ${isPhishing} (took ${urlDuration.toFixed(1)} ms). features_vector: ${urlFeatures}`);
+    if (isPhishing < 0.05) {
+        return 0;
+    }
     if (domFeatures != null && isPhishing < 0.5) {
         // isPhishing = isPhishingSiteCombined(urlFeatures, domFeatures);
         const domStart = performance.now();
@@ -22,5 +25,5 @@ export function isPhishingSite(urlFeatures: number[], domFeatures: number[] | nu
         isPhishing = domPrediction;
         console.log(`DOM Phishing check: ${domPrediction} (took ${domDuration.toFixed(1)} ms). features_vector: ${domFeatures}`);
     }
-    return isPhishing >= 0.5;
+    return isPhishing;
 }

@@ -33,13 +33,13 @@ chrome.runtime.onMessage.addListener(
         });
         break;
       case MessageType.CHECK_PHISHING:
-          chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+          { chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
             if (tabs[0]?.title?.toLowerCase() == "security error") {
               console.log("Security error page detected, skipping phishing check.");
               notifyContentScriptAndPopup({
                 type: MessageType.PHISHING_STATUS_UPDATED,
                 phishingStatus: PhishingStatus.PHISHING,
-              });    
+              });
               sendResponse({ phishingStatus: PhishingStatus.PHISHING });
               return;
             }
@@ -50,17 +50,26 @@ chrome.runtime.onMessage.addListener(
             return;
           }
           console.log("Checking phishing status for URL: ", message.url);
+          let phishStatus;
           const isPhis = isPhishingSite(message.urlFeatures, message.domFeatures);
-          const phishStatus = isPhis
-            ? PhishingStatus.PHISHING
-            : PhishingStatus.LEGITIMATE;
+          if (isPhis == 0) {
+              phishStatus = PhishingStatus.LEGITIMATE;
+          } else if (isPhis == 1) {
+              phishStatus = PhishingStatus.PHISHING;
+          }
+          else if (message.domFeatures == null) {
+              phishStatus = PhishingStatus.PROCESSING;
+          }
+          else {
+              phishStatus = isPhis < 0.5 ? PhishingStatus.LEGITIMATE : PhishingStatus.PHISHING;
+          }
           notifyContentScriptAndPopup({
             type: MessageType.PHISHING_STATUS_UPDATED,
             phishingStatus: phishStatus,
           });
           console.log("Phishing status updated:", isPhis);
           sendResponse({ phishingStatus: phishStatus });
-          break;
+          break; }
         case MessageType.FETCH_HTML:
             if (!message.url) {
                 console.error("No URL provided for FETCH_HTML");

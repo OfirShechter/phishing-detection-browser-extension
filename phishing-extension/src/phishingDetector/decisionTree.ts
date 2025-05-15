@@ -17,20 +17,20 @@ export class DecisionTreeClassifier {
     this.tree = tree;
   }
 
-  predict(input: number[]): number {
-    let node: TreeNode = this.tree;
+    predict(input: number[]): number {
+      let node: TreeNode = this.tree;
 
-    while (node.value === undefined) {
-      const featureValue = input[node.feature!];
-      if (featureValue <= node.threshold!) {
-        node = node.left!;
-      } else {
-        node = node.right!;
+      while (node.value === undefined) {
+        const featureValue = input[node.feature!];
+        if (featureValue <= node.threshold!) {
+          node = node.left!;
+        } else {
+          node = node.right!;
+        }
       }
-    }
 
-    return node.value;
-  }
+      return node.value;
+    }
 }
 
 export class LogregClassifier {
