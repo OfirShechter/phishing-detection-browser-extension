@@ -18,6 +18,7 @@ const phishingStatusText: Record<PhishingStatus, string> = {
 
 const EXTENSION_PATH: string = "C:/Users/ofir1/Msc/phishing-detection-browser-extension/phishing-extension/dist";
 // const EXTENSION_PATH: string = "./dist";
+// const csvFilePath = "data/openphish.csv";
 const csvFilePath = "data/legitimate_urls.csv";
 const csvContent = fsSync.readFileSync(csvFilePath, 'utf-8');
 const records = parse(csvContent, {
