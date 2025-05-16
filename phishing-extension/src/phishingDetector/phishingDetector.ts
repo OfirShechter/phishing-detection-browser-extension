@@ -14,7 +14,7 @@ export function isPhishingSite(urlFeatures: number[], domFeatures: number[] | nu
     let isPhishing = logregClassifier.predictProb(urlFeatures);
     const urlDuration = performance.now() - urlStart;
     console.log(`URL Phishing check: ${isPhishing} (took ${urlDuration.toFixed(1)} ms). features_vector: ${urlFeatures}`);
-    if (isPhishing < 0.05) {
+    if (isPhishing < 0.06) {
         return 0;
     }
     if (domFeatures != null && isPhishing < 0.5) {
