@@ -15,7 +15,6 @@ const phishingStatusText: Record<PhishingStatus, string> = {
   [PhishingStatus.ERROR]: '❗ An error occurred while checking the site.',
 };
 
-
 const EXTENSION_PATH: string = "C:/Users/ofir1/Msc/phishing-detection-browser-extension/phishing-extension/dist";
 // const EXTENSION_PATH: string = "./dist";
 // const csvFilePath = "data/openphish.csv";
