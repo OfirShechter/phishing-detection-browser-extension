@@ -109,6 +109,6 @@ function feturesObjectToArray(features: UrlFeatures): number[] {
 
 export function extractUrlFeatures(url: string): number[] {
   const features = extractUrlFeaturesObject(url);
-  console.log("extract URL features for", url)
+  // console.log("extract URL features for", url)
   return feturesObjectToArray(features);
 }

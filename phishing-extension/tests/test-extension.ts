@@ -1,11 +1,11 @@
 import { chromium } from 'playwright';
-import fs from 'fs/promises';
 import { PhishingStatus } from '../src/types/state.type';
 import { ConfusionMatrix } from 'ml-confusion-matrix';
 import {writeFileSync} from "node:fs";
 import { plot } from 'nodeplotlib';
 import * as fsSync from 'fs';
 import { parse } from 'csv-parse/sync';
+import fs from 'fs/promises';
 
 const phishingStatusText: Record<PhishingStatus, string> = {
   [PhishingStatus.PHISHING]: '⚠️ This site may be a phishing attempt!',
@@ -15,19 +15,26 @@ const phishingStatusText: Record<PhishingStatus, string> = {
   [PhishingStatus.ERROR]: '❗ An error occurred while checking the site.',
 };
 
-// const EXTENSION_PATH: string = "dist";
 const EXTENSION_PATH: string = "C:/Users/ofir1/Msc/phishing-detection-browser-extension/phishing-extension/dist";
-
-// const csvFilePath = "tests/legitimate_urls.csv";
-const csvFilePath = "data/openphish_enriched.csv";
+// const EXTENSION_PATH: string = "./dist";
+// const csvFilePath = "data/openphish.csv";
+const csvFilePath = "data/legitimate_urls.csv";
 const csvContent = fsSync.readFileSync(csvFilePath, 'utf-8');
 const records = parse(csvContent, {
   columns: true,
   skip_empty_lines: true,
 });
 
+function normalizeUrl(url: string): string {
+  if (!url.startsWith('http://') && !url.startsWith('https://')) {
+    return `https://${url}`;
+  }
+  return url;
+}
+
 (async () => {
   const userDataDir = "playwright-profile"; // must be persistent
+  await fs.rm(userDataDir, { recursive: true, force: true });
   // create userDataDir if it doesn't exist
   try {
     await fs.mkdir(userDataDir, { recursive: true });
@@ -42,7 +49,7 @@ const records = parse(csvContent, {
     ],
   });
 
-  const page = await context.newPage();
+  let page = await context.newPage();
 
   // Wait a moment to allow extension to load
   await new Promise((r) => setTimeout(r, 3000));
@@ -86,7 +93,14 @@ const records = parse(csvContent, {
       // Wait a moment to reset the page
       await new Promise((r) => setTimeout(r, 10));
 
-      await page.goto(url, { waitUntil: 'load', timeout: 15000 });
+      try {
+        await page.goto(normalizeUrl(url), { waitUntil: 'load', timeout: 15000 });
+      } catch (e) {
+        console.warn(`Failed to reset to about:blank. Recreating page...`, e);
+        await page.close();
+        page = await context.newPage();
+        continue;
+      }
 
       // Wait for extension logic to finish
       const startTime = Date.now(); // Start timing
@@ -165,7 +179,7 @@ const records = parse(csvContent, {
     timeTakenMs: timesTaken[idx],
   }));
 
-  writeFileSync('results.json', JSON.stringify({
+  writeFileSync('data/results.json', JSON.stringify({
     confusionMatrix: confusionMatrix.getMatrix(),
     accuracy: confusionMatrix.getAccuracy(),
     timeStats,

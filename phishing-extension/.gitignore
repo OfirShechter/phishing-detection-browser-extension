@@ -24,3 +24,5 @@ dist-tests
 *.sln
 playwright-profile
 *.sw?
+
+data/results.json
