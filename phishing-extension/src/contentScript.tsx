@@ -36,7 +36,7 @@ function checkPhishing(urlFeatures: number[], setPhishingStateCallback: React.Di
                     url: window.location.hostname,
                 },
                 (response) => {
-                    console.log('Initial phishing check response (no DOM features):', response);
+                    // console.log('Initial phishing check response (no DOM features):', response);
                     phishingStatus = response.phishingStatus;
                     setPhishingStateCallback(phishingStatus);
                 }
@@ -54,7 +54,7 @@ function checkPhishing(urlFeatures: number[], setPhishingStateCallback: React.Di
                         url: window.location.hostname,
                     },
                     (response) => {
-                        console.log('Follow-up phishing check with DOM features:', response);
+                        // console.log('Follow-up phishing check with DOM features:', response);
                         phishingStatus = response.phishingStatus;
                         setPhishingStateCallback(phishingStatus);
                     }

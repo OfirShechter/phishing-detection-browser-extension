@@ -49,10 +49,10 @@ const getPhishingKeywordsCount = (doc: Document): number => {
 //   return maxChildren;
 // };
 
-function extractDOMFeaturesObject(html: string, baseHostname: string): DOMFeatures {
+function extractDOMFeaturesObject(html: string, _: string): DOMFeatures {
   const parser = new DOMParser();
   const doc = parser.parseFromString(html, "text/html");
-  console.log("extract DOM:", baseHostname);
+  // console.log("extract DOM:", _); //baseHostname == _
 
   return {
     forms: doc.querySelectorAll("form").length,
@@ -95,6 +95,6 @@ function domFeaturesObjectToArray(features: DOMFeatures): number[] {
 
 export function extractDOMFeatures(html: string, baseHostname: string): number[] {
   const features = extractDOMFeaturesObject(html, baseHostname);
-  console.log("got DOM features:", features);
+  // console.log("got DOM features:", features);
   return domFeaturesObjectToArray(features);
 }
