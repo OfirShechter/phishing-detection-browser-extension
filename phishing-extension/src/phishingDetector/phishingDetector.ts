@@ -1,6 +1,17 @@
 import {htmlDecisionTreeClassifier} from "./decisionTree.ts";
 import { logregClassifier } from "./logisticRegression.ts";
 
+export function isPhishingSiteProbByUrl(urlFeatures: number[]): number {
+    let isPhishingProb = logregClassifier.predictProb(urlFeatures);
+
+    return isPhishingProb;
+}
+
+export function isPhishingSiteByDom(domFeatures: number[]): number {
+    const domPrediction = htmlDecisionTreeClassifier.predict(domFeatures);
+    return domPrediction;
+}
+
 export function isPhishingSite(urlFeatures: number[], domFeatures: number[] | null | undefined): number {
     // const urlStart = performance.now();
     let isPhishing = logregClassifier.predictProb(urlFeatures);

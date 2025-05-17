@@ -13,6 +13,8 @@ const phishingStatusText: Record<PhishingStatus, string> = {
   [PhishingStatus.PROCESSING]: '🔄 Checking...',
   [PhishingStatus.EXTENSION_INITIALIZING]: '🔄 Initializing Extension',
   [PhishingStatus.ERROR]: '❗ An error occurred while checking the site.',
+  [PhishingStatus.DEEPER_ANALISIS_REQIRED]: '🔄 Deeper analysis required.',
+
 };
 
 const EXTENSION_PATH: string = "C:/Users/ofir1/Msc/phishing-detection-browser-extension/phishing-extension/dist";
@@ -105,7 +107,7 @@ function normalizeUrl(url: string): string {
       // Wait for extension logic to finish
       const startTime = Date.now(); // Start timing
 
-      const timeout = 1000; // Timeout in milliseconds
+      const timeout = 5000; // Timeout in milliseconds
       const pollingInterval = 10; // Polling interval in milliseconds
 
       const start = Date.now();
