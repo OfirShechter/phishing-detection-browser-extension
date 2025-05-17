@@ -18,6 +18,58 @@ function checkPhishing(urlFeatures: number[], setPhishingStateCallback: React.Di
         type: MessageType.PHISHING_STATUS_UPDATED,
         phishingStatus: phishingStatus,
     });
+    
+    // Start fetching HTML immediately
+    const htmlPromise = new Promise<PhishingStatus>((resolve) => {
+        chrome.runtime.sendMessage(
+            { type: MessageType.FETCH_HTML, url: window.location.href },
+            (response) => {
+                if (!response?.html) {
+                    console.error('Failed to fetch HTML for phishing check:', response?.error);
+                    resolve(PhishingStatus.LEGITIMATE); // most likely a legitimate site- url analysis below 0.5
+                }
+                const domFeatures = extractDOMFeatures(response.html, window.location.hostname);
+
+                chrome.runtime.sendMessage(
+                    {
+                        type: MessageType.CHECK_PHISHING_BY_DOM,
+                        domFeatures,
+                        url: window.location.hostname,
+                    },
+                    (response) => {
+                        // console.log('Follow-up phishing check with DOM features:', response);
+                        phishingStatus = response.phishingStatus;
+                        resolve(phishingStatus);
+                    }
+                );
+            }
+        );
+    });
+
+    // First: send an immediate check with null DOM features
+    chrome.runtime.sendMessage(
+        {
+            type: MessageType.CHECK_PHISHING_BY_URL,
+            urlFeatures,
+            url: window.location.hostname,
+        },
+        async (response) => {
+            // console.log('Initial phishing check response (no DOM features):', response);
+            phishingStatus = response.phishingStatus;
+
+            if (phishingStatus === PhishingStatus.DEEPER_ANALISIS_REQIRED) {
+                phishingStatus = await htmlPromise;
+                chrome.runtime.sendMessage({
+                    type: MessageType.PHISHING_STATUS_UPDATED,
+                    phishingStatus: phishingStatus,
+                });
+
+            }
+
+            setPhishingStateCallback(phishingStatus);
+        }
+    );
+
     chrome.runtime.sendMessage(
         { type: MessageType.FETCH_HTML, url: window.location.href },
         (response) => {
@@ -27,30 +79,16 @@ function checkPhishing(urlFeatures: number[], setPhishingStateCallback: React.Di
                 return;
             }
 
-            // First: send an immediate check with null DOM features
-            chrome.runtime.sendMessage(
-                {
-                    type: MessageType.CHECK_PHISHING,
-                    domFeatures: null,
-                    urlFeatures,
-                    url: window.location.hostname,
-                },
-                (response) => {
-                    // console.log('Initial phishing check response (no DOM features):', response);
-                    phishingStatus = response.phishingStatus;
-                    setPhishingStateCallback(phishingStatus);
-                }
-            );
-
+            
             // Then: extract features in the background and send a second check
             setTimeout(() => {
-                const domFeatures = extractDOMFeatures(response.html, window.location.hostname);
+                if (phishingStatus == PhishingStatus.DEEPER_ANALISIS_REQIRED) {
+                    const domFeatures = extractDOMFeatures(response.html, window.location.hostname);
 
-                chrome.runtime.sendMessage(
+                    chrome.runtime.sendMessage(
                     {
-                        type: MessageType.CHECK_PHISHING,
+                        type: MessageType.CHECK_PHISHING_BY_DOM,
                         domFeatures,
-                        urlFeatures,
                         url: window.location.hostname,
                     },
                     (response) => {
@@ -59,7 +97,8 @@ function checkPhishing(urlFeatures: number[], setPhishingStateCallback: React.Di
                         setPhishingStateCallback(phishingStatus);
                     }
                 );
-            }, 0); // Use timeout to delay without blocking
+                }
+            }, 2000); // Use timeout to delay without blocking
         }
     );
 }

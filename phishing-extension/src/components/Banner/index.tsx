@@ -7,6 +7,7 @@ export const phishingStatusText: Record<PhishingStatus, string> = {
   [PhishingStatus.PROCESSING]: '🔄 Checking...',
   [PhishingStatus.EXTENSION_INITIALIZING]: '🔄 Initializing Extension',
   [PhishingStatus.ERROR]: '❗ An error occurred while checking the site.',
+  [PhishingStatus.DEEPER_ANALISIS_REQIRED]: '🔄 Deeper analysis required.',
 };
 
 export const Banner: React.FC<{ phishingState: PhishingStatus }> = ({ phishingState }) => {

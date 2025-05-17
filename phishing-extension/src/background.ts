@@ -1,6 +1,7 @@
 // import { initialize } from "./phishingDetector/initializeModel";
 import {
-  isPhishingSite,
+  isPhishingSiteByDom,
+  isPhishingSiteProbByUrl,
 } from "./phishingDetector/phishingDetector";
 import { Message, MessageType } from "./types/message.types";
 import { PhishingStatus } from "./types/state.type";
@@ -32,60 +33,63 @@ chrome.runtime.onMessage.addListener(
           enableBanner: message.enableBanner,
         });
         break;
-      case MessageType.CHECK_PHISHING:
-          { chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-            if (tabs[0]?.title?.toLowerCase() == "security error") {
-              // console.log("Security error page detected, skipping phishing check.");
-              notifyContentScriptAndPopup({
-                type: MessageType.PHISHING_STATUS_UPDATED,
-                phishingStatus: PhishingStatus.PHISHING,
-              });
-              sendResponse({ phishingStatus: PhishingStatus.PHISHING });
-              return;
-            }
-          });
-          if (!message.urlFeatures) {
-            // console.error("URL is required to check for phishing.");
-            sendResponse({ PhishingStatus: PhishingStatus.ERROR });
+      case MessageType.CHECK_PHISHING_BY_URL:
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+          if (tabs[0]?.title?.toLowerCase() == "security error") {
+            // console.log("Security error page detected, skipping phishing check.");
+            notifyContentScriptAndPopup({
+              type: MessageType.PHISHING_STATUS_UPDATED,
+              phishingStatus: PhishingStatus.PHISHING,
+            });
+            sendResponse({ phishingStatus: PhishingStatus.PHISHING });
             return;
           }
-          // console.log("Checking phishing status for URL: ", message.url);
-          let phishStatus;
-          const isPhis = isPhishingSite(message.urlFeatures, message.domFeatures);
-          if (isPhis == 0) {
-              phishStatus = PhishingStatus.LEGITIMATE;
-          } else if (isPhis == 1) {
-              phishStatus = PhishingStatus.PHISHING;
-          }
-          else if (message.domFeatures == null) {
-              phishStatus = PhishingStatus.PROCESSING;
-          }
-          else {
-              phishStatus = isPhis < 0.5 ? PhishingStatus.LEGITIMATE : PhishingStatus.PHISHING;
-          }
-          notifyContentScriptAndPopup({
-            type: MessageType.PHISHING_STATUS_UPDATED,
-            phishingStatus: phishStatus,
-          });
-          // console.log("Phishing status updated:", isPhis);
-          sendResponse({ phishingStatus: phishStatus });
-          break; }
-        case MessageType.FETCH_HTML:
-            if (!message.url) {
-                console.error("No URL provided for FETCH_HTML");
-                sendResponse({ html: null, error: "Missing URL" });
-                return;
-            }
-            fetch(message.url)
-                .then((res) => res.text())
-                .then((html) => {
-                    sendResponse({ html });
-                })
-                .catch((err) => {
-                    console.error("Failed to fetch HTML:", err);
-                    sendResponse({ html: null, error: err.toString() });
-                });
-            break;
+        });
+        if (!message.urlFeatures) {
+          // console.error("URL is required to check for phishing.");
+          sendResponse({ PhishingStatus: PhishingStatus.ERROR });
+          return;
+        }
+
+        const isPhishingSiteProb = isPhishingSiteProbByUrl(message.urlFeatures)
+        const status = isPhishingSiteProb < 0.06 ? PhishingStatus.LEGITIMATE : 
+        (isPhishingSiteProb > 0.5 ? PhishingStatus.PHISHING : PhishingStatus.DEEPER_ANALISIS_REQIRED);
+        notifyContentScriptAndPopup({
+          type: MessageType.PHISHING_STATUS_UPDATED,
+          phishingStatus: status,
+        });
+        // console.log("Phishing status updated:", isPhis);
+        sendResponse({ phishingStatus: status });
+        break;
+      case MessageType.CHECK_PHISHING_BY_DOM:
+        if (!message.domFeatures) {
+        // console.error("DOM is required to check for phishing.");
+        sendResponse({ PhishingStatus: PhishingStatus.LEGITIMATE }); // AS it's called only if the URL prob below 0.5
+        return;
+        }
+
+        const isPhis = isPhishingSiteByDom(message.domFeatures);
+        const phishStatus = isPhis ? PhishingStatus.PHISHING : PhishingStatus.LEGITIMATE;
+        
+        // console.log("Phishing status updated:", isPhis);
+        sendResponse({ phishingStatus: phishStatus });
+        break; 
+      case MessageType.FETCH_HTML:
+        if (!message.url) {
+            console.error("No URL provided for FETCH_HTML");
+            sendResponse({ html: null, error: "Missing URL" });
+            return;
+        }
+        fetch(message.url)
+            .then((res) => res.text())
+            .then((html) => {
+                sendResponse({ html });
+            })
+            .catch((err) => {
+                console.error("Failed to fetch HTML:", err);
+                sendResponse({ html: null, error: err.toString() });
+            });
+        break;
       default:
         console.error("Unknown message type:", message.type);
         break;
