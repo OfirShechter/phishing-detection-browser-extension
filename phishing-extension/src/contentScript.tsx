@@ -18,7 +18,7 @@ function checkPhishing(urlFeatures: number[], setPhishingStateCallback: React.Di
         type: MessageType.PHISHING_STATUS_UPDATED,
         phishingStatus: phishingStatus,
     });
-    
+
     // Start fetching HTML immediately
     const htmlPromise = new Promise<PhishingStatus>((resolve) => {
         chrome.runtime.sendMessage(
@@ -38,8 +38,8 @@ function checkPhishing(urlFeatures: number[], setPhishingStateCallback: React.Di
                     },
                     (response) => {
                         // console.log('Follow-up phishing check with DOM features:', response);
-                        phishingStatus = response.phishingStatus;
-                        resolve(phishingStatus);
+                        const phishingStat = response.phishingStatus;
+                        resolve(phishingStat);
                     }
                 );
             }
@@ -59,46 +59,15 @@ function checkPhishing(urlFeatures: number[], setPhishingStateCallback: React.Di
 
             if (phishingStatus === PhishingStatus.DEEPER_ANALISIS_REQIRED) {
                 phishingStatus = await htmlPromise;
-                chrome.runtime.sendMessage({
-                    type: MessageType.PHISHING_STATUS_UPDATED,
-                    phishingStatus: phishingStatus,
-                });
+
 
             }
 
+            chrome.runtime.sendMessage({
+                type: MessageType.PHISHING_STATUS_UPDATED,
+                phishingStatus: phishingStatus,
+            });
             setPhishingStateCallback(phishingStatus);
-        }
-    );
-
-    chrome.runtime.sendMessage(
-        { type: MessageType.FETCH_HTML, url: window.location.href },
-        (response) => {
-            if (!response?.html) {
-                console.error('Failed to fetch HTML for phishing check:', response?.error);
-                setPhishingStateCallback(PhishingStatus.ERROR);
-                return;
-            }
-
-            
-            // Then: extract features in the background and send a second check
-            setTimeout(() => {
-                if (phishingStatus == PhishingStatus.DEEPER_ANALISIS_REQIRED) {
-                    const domFeatures = extractDOMFeatures(response.html, window.location.hostname);
-
-                    chrome.runtime.sendMessage(
-                    {
-                        type: MessageType.CHECK_PHISHING_BY_DOM,
-                        domFeatures,
-                        url: window.location.hostname,
-                    },
-                    (response) => {
-                        // console.log('Follow-up phishing check with DOM features:', response);
-                        phishingStatus = response.phishingStatus;
-                        setPhishingStateCallback(phishingStatus);
-                    }
-                );
-                }
-            }, 2000); // Use timeout to delay without blocking
         }
     );
 }
