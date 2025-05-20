@@ -7,6 +7,7 @@ export enum MessageType {
     PHISHING_STATUS_UPDATED = 'PHISHING_STATUS_UPDATED',
     TOGGLE_BANNER = 'TOGGLE_BANNER',
     FETCH_HTML = "FETCH_HTML",
+    TEST = "TEST", // For grading test
 }
 
 export type Message = {
@@ -16,4 +17,5 @@ export type Message = {
     phishingStatus?: PhishingStatus;
     domFeatures?: number[];
     urlFeatures?: number[];
+    data?: any; // For grading test
 }
