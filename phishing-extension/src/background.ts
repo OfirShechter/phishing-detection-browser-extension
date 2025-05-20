@@ -20,7 +20,6 @@ function notifyContentScriptAndPopup(message: Message) {
   chrome.runtime.sendMessage(message);
 }
 
-
 chrome.runtime.onMessage.addListener(
   (message: Message, _sender, sendResponse) => {
     // console.log("Received message:", message);
@@ -89,6 +88,12 @@ chrome.runtime.onMessage.addListener(
                 console.error("Failed to fetch HTML:", err);
                 sendResponse({ html: null, error: err.toString() });
             });
+        break;
+      case MessageType.GET_PHISHING_STATUS:
+        // console.log("Extension initialized");
+        break;
+      case MessageType.PHISHING_STATUS_UPDATED:
+        // console.log("Phishing status updated:", message.phishingStatus);
         break;
       default:
         console.error("Unknown message type:", message.type);
