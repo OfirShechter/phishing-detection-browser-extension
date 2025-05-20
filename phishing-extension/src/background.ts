@@ -22,7 +22,7 @@ function notifyContentScriptAndPopup(message: Message) {
 
 chrome.runtime.onMessage.addListener(
   (message: Message, _sender, sendResponse) => {
-    console.log("Received message:", message);
+    // console.log("Received message:", message);
     switch (message.type) {
       case MessageType.TOGGLE_BANNER:
         const isEnabled = message.enableBanner;
@@ -97,11 +97,11 @@ chrome.runtime.onMessage.addListener(
         break;
       case MessageType.TEST:
         const data = message.data;
-        console.log("Received data for testing:", data);
-        // fetch('http://127.0.0.1:6543/verdict',{
-        //   method : 'POST',
-        //   body : JSON.stringify(data)
-        // })
+        // console.log("Received data for testing:", data);
+        fetch('http://127.0.0.1:6543/verdict',{
+          method : 'POST',
+          body : JSON.stringify(data)
+        })
         break;
       default:
         console.error("Unknown message type:", message.type);
