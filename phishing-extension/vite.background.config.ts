@@ -7,6 +7,10 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     emptyOutDir: false,
+    // debug config
+    minify: false,
+    sourcemap: true,
+    // end debug config
     rollupOptions: {
       input: path.resolve(__dirname, 'src/background.ts'),
       output: {

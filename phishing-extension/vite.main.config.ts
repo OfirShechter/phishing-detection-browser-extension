@@ -18,6 +18,10 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     emptyOutDir: false,
+    // debug config
+    minify: false,
+    sourcemap: true,
+    // end debug config
     rollupOptions: {
       input: {
         popup: path.resolve(__dirname, 'src/popup/main.tsx')
